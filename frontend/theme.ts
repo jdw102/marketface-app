@@ -32,7 +32,6 @@ export const theme = createTheme({
     Anchor: Anchor.extend({
         defaultProps: {
             fw: "400",
-            c: "gray",
             underline: "never",
             style: {
               "&:hover": {

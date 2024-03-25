@@ -105,3 +105,17 @@ a {
     color-scheme: dark;
   }
 }
+
+
+.card {
+  overflow: hidden;
+  position: relative;
+}
+
+.card img {
+  transition: transform 0.3s ease; /* Add a smooth transition effect */
+}
+
+.card:hover img {
+  transform: scale(1.1); /* Zoom in slightly when hovering */
+}

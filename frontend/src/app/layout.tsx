@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
 import "./globals.css";
-import { MantineProvider, ColorSchemeScript } from "@mantine/core";
-import { theme } from "../../theme";
+import { ColorSchemeScript } from "@mantine/core";
+import Provider from "@/components/shell/provider";
+import '@mantine/core/styles.css';
+
 
 const rubik = Rubik({
   weight: ['300','400', '500', '700'],
@@ -33,9 +35,9 @@ export default function RootLayout({
         />
       </head>
       <body className={rubik.className}>
-        <MantineProvider theme={theme}>
+        <Provider>
           {children}
-        </MantineProvider>
+        </Provider>
       </body>
     </html>
   );

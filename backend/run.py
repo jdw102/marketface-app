@@ -1,13 +1,15 @@
-from flask import Flask
-from app.routes.api_routes import api_app
+from app.factory import create_app
 
-app = Flask(__name__)
+import os
+import configparser
 
-app.register_blueprint(api_app)
 
-@app.route('/')
-def hello():
-    return 'Hello, World!'
+config = configparser.ConfigParser()
+config.read(os.path.abspath(os.path.join(".ini")))
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app = create_app()
+    app.config['DEBUG'] = True
+    app.config['MONGO_URI'] = config['PROD']['DB_URI']
+
+    app.run()
