@@ -7,7 +7,6 @@ sentiment_api = Blueprint('sentiment_api', __name__)
 @sentiment_api.route('/stocktwits', methods=['GET'])
 def stock_data():
     symbol = request.args.get('symbol')
-    print(symbol)
     return get_stocktwits(symbol)
 
 @sentiment_api.route('/headlines', methods=['GET'])

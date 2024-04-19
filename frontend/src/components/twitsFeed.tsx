@@ -57,7 +57,7 @@ const TwitsFeed: React.FC<TextFeedProps> = ({ feed, title }) => {
                                 {timeString}
                             </Text>
                             </Group>
-                            <Text style={{ overflowWrap: 'break-word' }}>{text.body}</Text>
+                            <Text style={{ overflowWrap: 'anywhere' }}>{text.body}</Text>
                             <Group justify="space-between" w="100%">
                                 <Badge color="blue" variant="light" style={{ marginTop: '8px' }}>
                                     {text.likes} Likes

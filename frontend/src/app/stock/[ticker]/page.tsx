@@ -13,7 +13,7 @@ export default async function Page({ params }: { params: { ticker: string } }) {
   const stockTwits = await fetch(`${process.env.API_URL}/stocktwits?symbol=${params.ticker}`, { next: { revalidate: 0 } }).then((res) => res.json());
   const headlines = await fetch(`${process.env.API_URL}/headlines?symbol=${params.ticker}`, { next: { revalidate: 0 } }).then((res) => res.json());
   return (
-    <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '0.25rem' }}>
       <Grid>
         <GridCol span={12}>
           <Title order={3}>
@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: { ticker: string } }) {
         <GridCol span={12}>
           <ChartWrapper ticker={params.ticker} />
         </GridCol>
-        <GridCol span={6}>
+        <GridCol span={12}>
           <SentimentChartWrapper ticker={params.ticker} />
         </GridCol>
         <GridCol span={6}>
@@ -31,8 +31,8 @@ export default async function Page({ params }: { params: { ticker: string } }) {
             <TwitsFeed feed={stockTwits} title="StockTwits Feed" />
           </div>
         </GridCol>
-        <GridCol span={12}>
-          <div >
+        <GridCol span={6} >
+          <div style={{ height: "75vh" }}>
             <HeadlineFeed feed={headlines} title="Headlines" />
           </div>
         </GridCol>

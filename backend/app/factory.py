@@ -9,6 +9,8 @@ from bson import json_util, ObjectId
 from datetime import datetime, timedelta
 from app.api.stock_api import stocks_api
 from app.api.sentiment_api import sentiment_api
+from app.api.prediction_api import prediction_api
+from app.api.time_api import time_api
 from flask.json.provider import _default as _json_default
 from flask_cors import CORS
 
@@ -36,6 +38,8 @@ def create_app():
     app.json.default = json_default
     app.register_blueprint(stocks_api)
     app.register_blueprint(sentiment_api)
+    app.register_blueprint(prediction_api)
+    app.register_blueprint(time_api)
     CORS(app)
 
     @app.route('/', defaults={'path': ''})

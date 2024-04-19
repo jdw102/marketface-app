@@ -19,7 +19,7 @@ export default async function Home() {
             <Anchor key={key} href={`/stock/${ticker.symbol}`}>
               <Card padding="lg" radius="md" className="card">
                 <CardSection >
-                  <Image p={30} src={ticker.image} alt={ticker.name} height={160} fit="contain" />
+                  <Image p={30} src={ticker.image} alt={ticker.name} height={130} fit="contain" />
                 </CardSection>
               </Card>
             </Anchor>

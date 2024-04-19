@@ -4,6 +4,8 @@ import "./globals.css";
 import { ColorSchemeScript } from "@mantine/core";
 import Provider from "@/components/shell/provider";
 import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
+
 
 
 const rubik = Rubik({

@@ -21,7 +21,6 @@ const SentimentChartWrapper = ({ ticker }: { ticker: string }) => {
                 const response = await fetch(`http://127.0.0.1:5000/stocktwits_sentiment?symbol=${ticker}&timeframe=${timeframe}`);
                 const data = await response.json();
                 setSentimentData(data);
-                console.log(data)
             } catch (error) {
                 console.error('Error fetching stock data:', error);
             }
