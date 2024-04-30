@@ -19,19 +19,38 @@ interface FormValues {
     window_size: number | undefined;
 }
 
+
+interface ModelFormProps {
+    settings: {
+        stocks: {
+            name: string,
+            features: string[],
+            minimum_date: string,
+        }[],
+        types: string[]
+    },
+    ticker: string
+}
+
 const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
 
 
-const CreateModelForm = () => {
+const CreateModelForm = ({ settings }: ModelFormProps) => {
     const router = useRouter();
+    const day_before = new Date();
+    day_before.setFullYear(day_before.getFullYear() - 5);
+    day_before.setDate(day_before.getDate() - 1);
+    const month_before = new Date();
+    month_before.setFullYear(month_before.getFullYear() - 5);
+    month_before.setMonth(month_before.getMonth() - 1);
 
     const form = useForm<FormValues>({
         initialValues: {
             model_name: '',
-            model_type: 'LSTM',
-            stock: 'NVDA',
-            date_range: [new Date(2014, 0, 2), new Date(2019, 1, 1)],
-            features: ["open", "high", "low", "close", "volume"],
+            model_type: settings.types[0],
+            stock: settings.stocks[0].name,
+            date_range: [new Date(settings.stocks[0].minimum_date), month_before],
+            features: ["close"],
             epochs: 10,
             window_size: 10,
         },
@@ -48,6 +67,7 @@ const CreateModelForm = () => {
 
     const [disabled, setDisabled] = React.useState(false);
 
+
     const handleSubmit = async () => {
         try {
             setDisabled(true);
@@ -62,7 +82,7 @@ const CreateModelForm = () => {
             setDisabled(false);
             const data = await response.json();
             router.push(`/model_info/${data.model_id}`);
-            
+
         } catch (error) {
             console.error(error);
         }
@@ -90,13 +110,13 @@ const CreateModelForm = () => {
                                     disabled={disabled}
                                     label="Stock"
                                     placeholder='Select stock'
-                                    data={['AAPL', 'NVDA', 'GOOGL', 'AMZN', 'TSLA']} {...form.getInputProps('stock')}
+                                    data={settings.stocks.map((s) => (s.name))} {...form.getInputProps('stock')}
                                 />
                                 <Select
                                     disabled={disabled}
                                     label="Model Type"
                                     placeholder='Select model type'
-                                    data={['LSTM', 'GRU', 'RNN']}
+                                    data={settings.types}
                                     {...form.getInputProps('model_type')}
                                 />
                             </Fieldset>
@@ -105,6 +125,12 @@ const CreateModelForm = () => {
                             <Fieldset legend='Training Info'>
                                 <DatePickerInput
                                     disabled={disabled}
+                                    minDate={
+                                        form.getValues().stock
+                                            ? new Date(settings.stocks.find((s) => s.name === form.getValues().stock)?.minimum_date as string)
+                                            : undefined
+                                    }
+                                    maxDate={day_before}
                                     label="Training Range"
                                     type="range"
                                     leftSection={icon}
@@ -125,7 +151,7 @@ const CreateModelForm = () => {
                                     disabled={disabled}
                                     label="Features"
                                     placeholder="Select features"
-                                    data={['open', 'high', 'low', 'close', 'volume']}
+                                    data={form.getValues().stock ? settings.stocks.find((s) => s.name === form.getValues().stock)?.features : []}
                                     {...form.getInputProps('features')}
                                 />
                                 <Text mt={5} mb={5} fw={500} size='sm'>Window Size</Text>

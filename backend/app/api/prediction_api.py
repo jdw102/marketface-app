@@ -1,5 +1,5 @@
 from flask import request, Blueprint, jsonify
-from app.services.prediction_service import get_predictions, train_model, get_all_models, get_model_info, delete_model_info
+from app.services.prediction_service import get_predictions, train_model, get_all_models, get_model_info, delete_model_info, get_model_settings
 from datetime import datetime
 import time
 prediction_api = Blueprint('prediction_api', __name__)
@@ -33,12 +33,6 @@ def train():
         epochs,
         features
     )
-    # time.sleep(5)
-    # return jsonify(
-    #     {
-    #         "model_name": model_name,
-    #     }
-    # )
 
 
 @prediction_api.route('/all_models', methods=['GET'])
@@ -56,3 +50,8 @@ def get_model():
 def delete_model():
     id = request.args.get('id')
     return delete_model_info(id)
+
+
+@prediction_api.route('/model_settings', methods=['GET'])
+def settings():
+    return get_model_settings()

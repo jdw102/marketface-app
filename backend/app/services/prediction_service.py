@@ -1,4 +1,4 @@
-from app.db import get_model_input, get_model_data, save_model_metadata, get_all_model_metadata, get_model_by_id, delete_model_by_id
+from app.db import get_model_input, get_model_data, save_model_metadata, get_all_model_metadata, get_model_by_id, delete_model_by_id, get_minimum_date, get_features, get_all_saved_models
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 import numpy as np
@@ -135,7 +135,7 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, ep
         "model_type": model_type,
         "symbol": symbol,
         "start_date": start_date,
-        "end_date": end_date,
+        "end_date": curr_date,
         "features": features,
         "epochs": epochs,
         "window": window,
@@ -143,9 +143,13 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, ep
         "rmse": rmse,
         "mape": mape,
         "direction": direction,
-        "actual": actual_ret,
         "predicted": predicted_ret,
-        "loss": loss_dict
+        "loss": loss_dict,
+        "created": curr_date,
+        "running_predictions": [],
+        "running_rmse": 0,
+        "running_mape": 0,
+        "running_direction": 0,
     }
     id = save_model_metadata(model_metadata)
     return jsonify({"model_id": id})
@@ -157,18 +161,46 @@ def upload_to_bucket(model, model_name, symbol):
     bucket = client.get_bucket(os.environ.get("BUCKET_NAME"))
     blob = bucket.blob(f"models/{symbol.lower()}/{model_name}.keras")
     blob.upload_from_filename(f"./models/{symbol.lower()}/{model_name}.keras")
+    os.remove(f"./models/{symbol.lower()}/{model_name}.keras")
     return blob.public_url
 
 
 def get_all_models():
-    return jsonify(get_all_model_metadata())
+    model_metadata = get_all_model_metadata()
+    saved_ids = get_all_saved_models()
+    return jsonify({"models": model_metadata, "saved_ids": saved_ids})
 
 
 def get_model_info(id):
     model = get_model_by_id(id)
-    print(model)
+    data =  get_model_data(model["symbol"], model["end_date"])
+    data = data[(data["date"] >= model["start_date"]) & (data["date"] < model["end_date"])]
+    prices = data[["date", "close"]].to_dict(orient="records")
+    model["actual"] = prices
     return jsonify(model)
 
 
 def delete_model_info(id):
+    model = get_model_by_id(id)
+    url = model["url"]
+    client = storage.Client()
+    bucket = client.get_bucket(os.environ.get("BUCKET_NAME"))
+    blob = bucket.blob("/".join(url.split("/")[-3:]))
+    blob.delete()
     return jsonify(delete_model_by_id(id))
+
+
+def get_model_settings():
+    settings = {
+        "stocks": [
+                {
+                    "name": "NVDA",
+                    "features": get_features("NVDA"),
+                    "minimum_date": get_minimum_date("NVDA")
+                }
+            ],
+        "types": [
+            "LSTM"
+        ]
+    }
+    return jsonify(settings)

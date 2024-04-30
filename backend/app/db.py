@@ -98,15 +98,39 @@ def get_stock_prices(ticker, start_date, end_date):
 
 
 def get_model_data(symbol, end_date):
-    # if symbol == "NVDA":
-    #     data = db.nvda_model_data.find({
-    #         "date": {"$lt": end_date}
-    #     }).sort("date", 1)
-    # else:
-    #     data = db.nvda_model_data.find({
-    #         "date": {"$lt": end_date}
-    #     }).sort("date", 1)
-    data = list(db.nvda_model_data.find())
+    if symbol == "NVDA":
+        data = db.nvda_model_data.find({
+            "date": {
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    elif symbol == "AAPL":
+        data = db.aapl_model_data.find({
+            "date": {
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    elif symbol == "META":
+        data = db.meta_model_data.find({
+            "date": {
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    elif symbol == "AMZN":
+        data = db.amzn_model_data.find({
+            "date": {
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    elif symbol == "TSLA":
+        data = db.tsla_model_data.find({
+            "date": {
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    else:
+        data = None
+    data = list(data)
     data = pd.DataFrame(data)
     return data
 
@@ -127,6 +151,15 @@ def get_all_model_metadata():
     return metadata
 
 
+
+def get_all_saved_models():
+    models = {}
+    for ticker in db.tickers.find():
+        if "model_id" in ticker:
+            models[ticker["symbol"]] = ticker["model_id"]
+    return models
+
+
 def get_model_by_id(id):
     try:
         model = db.model_metadata.find_one({"_id": ObjectId(id)})
@@ -141,3 +174,55 @@ def delete_model_by_id(id):
     except InvalidId:
         return None
     return result.deleted_count
+
+
+def get_minimum_date(symbol):
+    if symbol == "NVDA":
+        data = db.nvda_model_data.find().sort("date", 1).limit(1)
+    elif symbol == "AAPL":
+        data = db.aapl_model_data.find().sort("date", 1).limit(1)
+    elif symbol == "META":
+        data = db.googl_model_data.find().sort("date", 1).limit(1)
+    elif symbol == "AMZN":
+        data = db.amzn_model_data.find().sort("date", 1).limit(1)
+    elif symbol == "TSLA":
+        data = db.tsla_model_data.find().sort("date", 1).limit(1)
+    else:
+        return None
+    data = list(data)
+    if len(data) == 0:
+        return None
+    return data[0]["date"]
+
+
+def get_features(symbol):
+    if symbol == "NVDA":
+        data = db.nvda_model_data.find().sort("date", 1).limit(1)
+    elif symbol == "AAPL":
+        data = db.aapl_model_data.find().sort("date", 1).limit(1)
+    elif symbol == "META":
+        data = db.googl_model_data.find().sort("date", 1).limit(1)
+    elif symbol == "AMZN":
+        data = db.amzn_model_data.find().sort("date", 1).limit(1)
+    elif symbol == "TSLA":
+        data = db.tsla_model_data.find().sort("date", 1).limit(1)
+    else:
+        return None
+    data = list(data)
+    if len(data) == 0:
+        return None
+    keys = list(data[0].keys())
+    keys.remove("date")
+    keys.remove("_id")
+    return keys
+
+
+def update_ticker_model(symbol, model_id):
+    try:
+        result = db.tickers.find_one_and_update(
+            {"symbol": symbol},
+            {"$set": {"model_id": model_id}}
+        )
+    except Exception as e:
+        return None
+    return result

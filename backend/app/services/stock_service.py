@@ -2,7 +2,7 @@ import requests
 import os
 import yfinance as yf
 from flask import jsonify
-from app.db import get_all_tickers, get_stock_prices
+from app.db import get_all_tickers, get_stock_prices, update_ticker_model
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -39,3 +39,11 @@ def get_tickers():
         print("An error occurred:", e)
         return None
     
+
+def update_ticker_model_id(symbol, model_id):
+    try:
+        data = update_ticker_model(symbol, model_id)
+        return jsonify(data)
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
