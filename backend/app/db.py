@@ -124,3 +124,11 @@ def get_all_model_metadata():
     for data in db.model_metadata.find():
         metadata.append(data)
     return metadata
+
+
+def get_model_by_name(model_name):
+    try:
+        model = db.model_metadata.find_one({"name": model_name})
+    except InvalidId:
+        return None
+    return model

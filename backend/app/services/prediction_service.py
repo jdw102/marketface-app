@@ -1,4 +1,4 @@
-from app.db import get_model_input, get_model_data, save_model_metadata, get_all_model_metadata
+from app.db import get_model_input, get_model_data, save_model_metadata, get_all_model_metadata, get_model_by_name
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 import numpy as np
@@ -116,6 +116,7 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, ep
     X_train, y_train = extract_seqX_outcomeY(train_scaled, window, window, close_price_indx)
     X_test = extract_test_data(features, data, test, window, scaler)
     model = create_model(X_train)
+    print("Model created")
     model.fit(X_train, y_train, epochs=epochs, batch_size=len(train), verbose=1, shuffle=False)
     print("Model trained")
 
@@ -131,7 +132,7 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, ep
     
     print(f"RMSE: {rmse}", f"MAPE: {mape}", f"Direction: {direction}")
 
-    return jsonify({"rmse": rmse, "mape": mape, "direction": direction, "actual_price": actual_price.tolist(), "predicted_price": predicted_price.tolist()})
+    return jsonify({"model_name": model_name})
 
 
 def upload_to_bucket(model, model_name, symbol):
@@ -145,3 +146,7 @@ def upload_to_bucket(model, model_name, symbol):
 
 def get_all_models():
     return jsonify(get_all_model_metadata())
+
+
+def get_model_info(model_name):
+    return jsonify(get_model_by_name(model_name))
