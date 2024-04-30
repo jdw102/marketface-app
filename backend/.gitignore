@@ -4,3 +4,6 @@
 *.h5
 **/__pycache__/
 *.pyc
+project-c5dbc-4030df32e0ee.json
+**/__pycache__
+*.keras

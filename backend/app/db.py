@@ -25,13 +25,14 @@ def get_all_tickers():
         tickers.append(ticker)
     return tickers
 
-def get_past_stocktwits(symbol, num=20):
+def get_past_day_stocktwits(symbol):
     current_datetime = datetime.utcnow()
     current_datetime -= relativedelta(years=5)
+    day_before = current_datetime - timedelta(days=1)
     past_items = list(db.stocktwits.find({
         "stock": symbol,
-        "created_at": {"$lt": current_datetime}
-    }).sort("created_at", -1).limit(num))
+        "created_at": {"$gt": day_before, "$lt": current_datetime}
+    }).sort("created_at", -1))
     return past_items
 
 def get_past_headlines(symbol, num=10):
@@ -94,3 +95,32 @@ def get_stock_prices(ticker, start_date, end_date):
     data = pd.DataFrame(data)
     data = data[["date", "open", "high", "low", "close", "volume"]]
     return data
+
+
+def get_model_data(symbol, end_date):
+    # if symbol == "NVDA":
+    #     data = db.nvda_model_data.find({
+    #         "date": {"$lt": end_date}
+    #     }).sort("date", 1)
+    # else:
+    #     data = db.nvda_model_data.find({
+    #         "date": {"$lt": end_date}
+    #     }).sort("date", 1)
+    data = list(db.nvda_model_data.find())
+    data = pd.DataFrame(data)
+    return data
+
+
+def save_model_metadata(model_metadata):
+    try:
+        db.model_metadata.insert_one(model_metadata.get_dict())
+    except DuplicateKeyError:
+        return False
+    return True
+
+
+def get_all_model_metadata():
+    metadata = []
+    for data in db.model_metadata.find():
+        metadata.append(data)
+    return metadata
