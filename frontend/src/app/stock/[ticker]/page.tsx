@@ -1,8 +1,8 @@
 import { Grid, GridCol, Title } from "@mantine/core";
-import TwitsFeed from "@/components/twitsFeed";
-import HeadlineFeed from "@/components/headlinesFeed";
-import ChartWrapper from "@/components/chartWrapper";
-import SentimentChartWrapper from "@/components/sentimentChartWrapper";
+import TwitsFeed from "@/components/stock/twitsFeed";
+import HeadlineFeed from "@/components/stock/headlinesFeed";
+import ChartWrapper from "@/components/stock/chartWrapper";
+import SentimentChartWrapper from "@/components/stock/sentimentChartWrapper";
 
 
 

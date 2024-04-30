@@ -113,10 +113,11 @@ def get_model_data(symbol, end_date):
 
 def save_model_metadata(model_metadata):
     try:
-        db.model_metadata.insert_one(model_metadata.get_dict())
+        result = db.model_metadata.insert_one(model_metadata)
+        model_id = result.inserted_id
     except DuplicateKeyError:
-        return False
-    return True
+        return None
+    return model_id
 
 
 def get_all_model_metadata():
@@ -126,9 +127,17 @@ def get_all_model_metadata():
     return metadata
 
 
-def get_model_by_name(model_name):
+def get_model_by_id(id):
     try:
-        model = db.model_metadata.find_one({"name": model_name})
+        model = db.model_metadata.find_one({"_id": ObjectId(id)})
     except InvalidId:
         return None
     return model
+
+
+def delete_model_by_id(id):
+    try:
+        result = db.model_metadata.delete_one({"_id": ObjectId(id)})
+    except InvalidId:
+        return None
+    return result.deleted_count

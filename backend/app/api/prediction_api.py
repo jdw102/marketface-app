@@ -1,5 +1,5 @@
 from flask import request, Blueprint, jsonify
-from app.services.prediction_service import get_predictions, train_model, get_all_models, get_model_info
+from app.services.prediction_service import get_predictions, train_model, get_all_models, get_model_info, delete_model_info
 from datetime import datetime
 import time
 prediction_api = Blueprint('prediction_api', __name__)
@@ -23,22 +23,22 @@ def train():
     window_size = data.get('window_size')
     start_date = datetime.strptime(date_range[0], '%Y-%m-%dT%H:%M:%S.%fZ')
     end_date = datetime.strptime(date_range[1], '%Y-%m-%dT%H:%M:%S.%fZ')
-    # return train_model(
-    #     model_type,
-    #     model_name,
-    #     window_size,
-    #     stock,
-    #     start_date,
-    #     end_date,
-    #     epochs,
-    #     features
-    # )
-    time.sleep(5)
-    return jsonify(
-        {
-            "model_name": model_name,
-        }
+    return train_model(
+        model_type,
+        model_name,
+        window_size,
+        stock,
+        start_date,
+        end_date,
+        epochs,
+        features
     )
+    # time.sleep(5)
+    # return jsonify(
+    #     {
+    #         "model_name": model_name,
+    #     }
+    # )
 
 
 @prediction_api.route('/all_models', methods=['GET'])
@@ -48,5 +48,11 @@ def all_models():
 
 @prediction_api.route('/model', methods=['GET'])
 def get_model():
-    model_name = request.args.get('model_name')
-    return get_model_info(model_name)
+    id = request.args.get('id')
+    return get_model_info(id)
+
+
+@prediction_api.route('/delete_model', methods=['DELETE'])
+def delete_model():
+    id = request.args.get('id')
+    return delete_model_info(id)

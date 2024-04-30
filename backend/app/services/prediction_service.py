@@ -1,4 +1,4 @@
-from app.db import get_model_input, get_model_data, save_model_metadata, get_all_model_metadata, get_model_by_name
+from app.db import get_model_input, get_model_data, save_model_metadata, get_all_model_metadata, get_model_by_id, delete_model_by_id
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 import numpy as np
@@ -77,7 +77,6 @@ def get_data(symbol, features, start_date, end_date, current_date):
     train_data = train_data[features]
     test_data = test_data[features]
     df = df[(df["date"] >= start_date) & (df["date"] < current_date)]
-    df = df[features]
     return df, train_data, test_data
 
 # lstm_model = tf.keras.models.load_model("lstm_model.h5")
@@ -116,9 +115,7 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, ep
     X_train, y_train = extract_seqX_outcomeY(train_scaled, window, window, close_price_indx)
     X_test = extract_test_data(features, data, test, window, scaler)
     model = create_model(X_train)
-    print("Model created")
-    model.fit(X_train, y_train, epochs=epochs, batch_size=len(train), verbose=1, shuffle=False)
-    print("Model trained")
+    history = model.fit(X_train, y_train, epochs=epochs, batch_size=len(train), verbose=1, shuffle=False, validation_split=0.1)
 
     predicted_price = model.predict(X_test)
     predicted_price = close_scaler.inverse_transform(predicted_price)[:, 0]
@@ -127,12 +124,31 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, ep
     mape = calculate_mape(actual_price, predicted_price)
     direction = calculate_dir(actual_price, predicted_price)
     url = upload_to_bucket(model, model_name, symbol)
-    model_metadata = ModelMetadata(model_name, model_type, symbol, start_date, end_date, features, epochs, window, url, rmse, mape, direction)
-    save_model_metadata(model_metadata)
-    
-    print(f"RMSE: {rmse}", f"MAPE: {mape}", f"Direction: {direction}")
-
-    return jsonify({"model_name": model_name})
+    actual_ret = data[["date", "close"]].to_dict(orient="records")
+    predicted_ret = pd.DataFrame(data={"date": data["date"][len(train):], "close": predicted_price}).to_dict(orient="records")
+    loss_dict = {
+        'loss': history.history['loss'],
+        'val_loss': history.history['val_loss']
+    }
+    model_metadata = {
+        "model_name": model_name,
+        "model_type": model_type,
+        "symbol": symbol,
+        "start_date": start_date,
+        "end_date": end_date,
+        "features": features,
+        "epochs": epochs,
+        "window": window,
+        "url": url,
+        "rmse": rmse,
+        "mape": mape,
+        "direction": direction,
+        "actual": actual_ret,
+        "predicted": predicted_ret,
+        "loss": loss_dict
+    }
+    id = save_model_metadata(model_metadata)
+    return jsonify({"model_id": id})
 
 
 def upload_to_bucket(model, model_name, symbol):
@@ -148,5 +164,11 @@ def get_all_models():
     return jsonify(get_all_model_metadata())
 
 
-def get_model_info(model_name):
-    return jsonify(get_model_by_name(model_name))
+def get_model_info(id):
+    model = get_model_by_id(id)
+    print(model)
+    return jsonify(model)
+
+
+def delete_model_info(id):
+    return jsonify(delete_model_by_id(id))

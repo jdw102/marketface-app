@@ -5,6 +5,7 @@ import { ColorSchemeScript } from "@mantine/core";
 import Provider from "@/components/shell/provider";
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
+import '@mantine/charts/styles.css';
 
 
 

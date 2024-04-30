@@ -61,7 +61,7 @@ const CreateModelForm = () => {
             form.reset();
             setDisabled(false);
             const data = await response.json();
-            router.push(`/model_info/${data.model_name}`);
+            router.push(`/model_info/${data.model_id}`);
             
         } catch (error) {
             console.error(error);
