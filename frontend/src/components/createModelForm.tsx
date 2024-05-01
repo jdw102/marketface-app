@@ -1,10 +1,11 @@
 "use client";
-import React from 'react'
+import React, {useEffect, useState} from 'react'
 import { useForm } from '@mantine/form';
 import { Grid, GridCol, TextInput, Slider, Fieldset, NumberInput, MultiSelect, Button, Select, Text, Title, Group, rem, LoadingOverlay, Box } from '@mantine/core';
 import { DatePickerInput, DatesRangeValue } from '@mantine/dates';
 import { IconCalendar } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation'
+import { getSimulatedDate } from '@/lib/timeDifference';
 
 
 
@@ -35,21 +36,27 @@ interface ModelFormProps {
 const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
 
 
-const CreateModelForm = ({ settings }: ModelFormProps) => {
+const CreateModelForm = ({ settings, ticker }: ModelFormProps) => {
     const router = useRouter();
-    const day_before = new Date();
-    day_before.setFullYear(day_before.getFullYear() - 5);
-    day_before.setDate(day_before.getDate() - 1);
-    const month_before = new Date();
-    month_before.setFullYear(month_before.getFullYear() - 5);
-    month_before.setMonth(month_before.getMonth() - 1);
+    
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const monthBefore = new Date(currentDate);
+    const dayBefore = new Date(currentDate);
+    monthBefore.setMonth(monthBefore.getMonth() - 1);
+    dayBefore.setDate(dayBefore.getDate() - 1);
+
+    useEffect(() => {
+        setCurrentDate(getSimulatedDate(localStorage))
+    }
+    , []);
+    
 
     const form = useForm<FormValues>({
         initialValues: {
             model_name: '',
             model_type: settings.types[0],
-            stock: settings.stocks[0].name,
-            date_range: [new Date(settings.stocks[0].minimum_date), month_before],
+            stock: ticker,
+            date_range: [null, null],
             features: ["close"],
             epochs: 10,
             window_size: 10,
@@ -71,12 +78,22 @@ const CreateModelForm = ({ settings }: ModelFormProps) => {
     const handleSubmit = async () => {
         try {
             setDisabled(true);
+            console.log(currentDate);
             const response = await fetch(`http://127.0.0.1:5000/train`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(form.values),
+                body: JSON.stringify({
+                    model_name: form.values.model_name,
+                    model_type: form.values.model_type,
+                    stock: form.values.stock,
+                    date_range: form.values.date_range,
+                    features: form.values.features,
+                    epochs: form.values.epochs,
+                    window_size: form.values.window_size,
+                    curr_date: currentDate
+                }),
             });
             form.reset();
             setDisabled(false);
@@ -111,6 +128,14 @@ const CreateModelForm = ({ settings }: ModelFormProps) => {
                                     label="Stock"
                                     placeholder='Select stock'
                                     data={settings.stocks.map((s) => (s.name))} {...form.getInputProps('stock')}
+                                    onChange={(val) => {
+                                        form.setValues({
+                                            ...form.values,
+                                            features: ["close"],
+                                            date_range: [null, null],
+                                            stock: val
+                                        });
+                                    }}
                                 />
                                 <Select
                                     disabled={disabled}
@@ -130,7 +155,7 @@ const CreateModelForm = ({ settings }: ModelFormProps) => {
                                             ? new Date(settings.stocks.find((s) => s.name === form.getValues().stock)?.minimum_date as string)
                                             : undefined
                                     }
-                                    maxDate={day_before}
+                                    maxDate={dayBefore}
                                     label="Training Range"
                                     type="range"
                                     leftSection={icon}
@@ -194,7 +219,7 @@ const CreateModelForm = ({ settings }: ModelFormProps) => {
                         Clear
                     </Button>
                     <Button
-                        type="submit"
+                        type='submit'
                         disabled={disabled}
                     >
                         Train Model

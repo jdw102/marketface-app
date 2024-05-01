@@ -25,25 +25,24 @@ def get_all_tickers():
         tickers.append(ticker)
     return tickers
 
-def get_past_day_stocktwits(symbol):
-    current_datetime = datetime.utcnow()
-    current_datetime -= relativedelta(years=5)
-    day_before = current_datetime - timedelta(days=1)
+def get_past_day_stocktwits(symbol, curr_date):
+    day_before = curr_date - timedelta(days=1)
+    print(day_before, curr_date)
     past_items = list(db.stocktwits.find({
         "stock": symbol,
-        "created_at": {"$gt": day_before, "$lt": current_datetime}
+        "created_at": {"$gt": day_before, "$lt": curr_date}
     }).sort("created_at", -1))
     return past_items
 
-def get_past_headlines(symbol, num=10):
-    current_datetime = datetime.utcnow()
-    current_datetime -= relativedelta(years=5)
-    current_datetime_str = f"{current_datetime.strftime("%Y-%m-%d %H:%M:%S")}-04:00"
+
+def get_past_headlines(symbol, curr_date, num=10):
+    current_datetime_str = f"{curr_date.strftime("%Y-%m-%d %H:%M:%S")}-04:00"
     past_items = list(db.news.find({
         "stock": symbol,
         "date": {"$lt": current_datetime_str}
     }).sort("date", -1).limit(num))
     return past_items
+
 
 def get_past_stocktwits_sentiment(symbol, timeframe):
     current_datetime = datetime.utcnow()
@@ -95,6 +94,15 @@ def get_stock_prices(ticker, start_date, end_date):
     data = pd.DataFrame(data)
     data = data[["date", "open", "high", "low", "close", "volume"]]
     return data
+
+
+
+def update_running_predictions(model_id, prediction):
+    db.model_metadata.update_one(
+        {"_id": model_id},
+        {"$push": {"running_predictions": model_id}}
+    )
+
 
 
 def get_model_data(symbol, end_date):
@@ -160,6 +168,12 @@ def get_all_saved_models():
     return models
 
 
+def get_saved_model(ticker):
+    ticker = db.tickers.find_one({"symbol": ticker})
+    model_id = ticker.get("model_id")
+    return model_id
+
+
 def get_model_by_id(id):
     try:
         model = db.model_metadata.find_one({"_id": ObjectId(id)})
@@ -182,11 +196,30 @@ def get_minimum_date(symbol):
     elif symbol == "AAPL":
         data = db.aapl_model_data.find().sort("date", 1).limit(1)
     elif symbol == "META":
-        data = db.googl_model_data.find().sort("date", 1).limit(1)
+        data = db.meta_model_data.find().sort("date", 1).limit(1)
     elif symbol == "AMZN":
         data = db.amzn_model_data.find().sort("date", 1).limit(1)
     elif symbol == "TSLA":
         data = db.tsla_model_data.find().sort("date", 1).limit(1)
+    else:
+        return None
+    data = list(data)
+    if len(data) == 0:
+        return None
+    return data[0]["date"]
+
+
+def get_maximum_date(symbol):
+    if symbol == "NVDA":
+        data = db.nvda_model_data.find().sort("date", -1).limit(1)
+    elif symbol == "AAPL":
+        data = db.aapl_model_data.find().sort("date", -1).limit(1)
+    elif symbol == "META":
+        data = db.meta_model_data.find().sort("date", -1).limit(1)
+    elif symbol == "AMZN":
+        data = db.amzn_model_data.find().sort("date", -1).limit(1)
+    elif symbol == "TSLA":
+        data = db.tsla_model_data.find().sort("date", -1).limit(1)
     else:
         return None
     data = list(data)

@@ -1,4 +1,4 @@
-from app.db import get_model_input, get_model_data, save_model_metadata, get_all_model_metadata, get_model_by_id, delete_model_by_id, get_minimum_date, get_features, get_all_saved_models
+from app.db import get_model_input, get_model_data, save_model_metadata, get_saved_model, get_all_model_metadata, get_model_by_id, delete_model_by_id, get_minimum_date, get_features, get_all_saved_models, get_maximum_date, update_running_predictions
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 import numpy as np
@@ -6,10 +6,11 @@ import pandas as pd
 from flask import jsonify
 from tensorflow.keras.layers import Input, LSTM, Dense
 from tensorflow.keras.models import Model
-from app.services.time_service import get_date
-from app.models.model_metadata import ModelMetadata
 from google.cloud import storage
 import os
+from google.cloud import storage
+from datetime import timedelta
+import time
 
 
 def extract_seqX_outcomeY(data, N, offset, y_feature):
@@ -79,38 +80,53 @@ def get_data(symbol, features, start_date, end_date, current_date):
     df = df[(df["date"] >= start_date) & (df["date"] < current_date)]
     return df, train_data, test_data
 
-# lstm_model = tf.keras.models.load_model("lstm_model.h5")
-columns = ["date", "open", "high", "low", "close", "volume", "thresholded_social_media_sentiment"]
-
-def get_predictions(model, window, symbol, days):
-    df = get_model_input(symbol, window)
-    # data = df.drop(columns=["date"]).values
-    # scaler = StandardScaler()
-    # data = scaler.fit_transform(data)
-    # curr_window = data
-    # predictions = []
-    # for _ in range(days):
-    #     prediction = lstm_model.predict(curr_window.reshape((1, curr_window.shape[0], curr_window.shape[1])))
-    #     curr_window = curr_window[1:]
-    #     curr_window = np.append(curr_window, prediction, axis=0)
-    #     predictions.append(prediction[0])
-    # predictions = np.array(predictions)
-    # predictions = scaler.inverse_transform(predictions)
-    latest_date = df["date"].max() + pd.DateOffset(days=1)
-    date_range = pd.date_range(start=latest_date, periods=days, freq="B").strftime("%Y-%m-%d").tolist()
-    new_df = pd.DataFrame(data=np.array([[200] * len(columns)] * len(date_range)), columns=columns)
-    new_df["date"] = date_range
-    new_df = new_df[columns]
-    return jsonify(new_df.to_dict(orient="records"))
 
 
-def train_model(model_type, model_name, window, symbol, start_date, end_date, epochs, features):
-    curr_date = get_date()
+def load_model_from_bucket(model_data):
+    client = storage.Client()
+    bucket = client.get_bucket(os.environ.get("BUCKET_NAME"))
+    blob = bucket.blob(f"models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
+    blob.download_to_filename(f"./models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
+    model = tf.keras.models.load_model(f"./models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
+    os.remove(f"./models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
+    return model
+
+
+def add_business_day(date, num_days):
+    current_date = date
+    for _ in range(num_days):
+        current_date += timedelta(days=1)
+        while current_date.weekday() in [5, 6]:  # Saturday (5) or Sunday (6)
+            current_date += timedelta(days=1)  # Skip weekend
+    return current_date
+
+
+def make_prediction(model_id):
+    model_data = get_model_by_id(model_id)
+    df = get_model_data(model_data["symbol"], model_data["end_date"])
+    window = model_data["window"]
+    features = model_data["features"]
+    scaler = StandardScaler()
+    scaler_close = StandardScaler()
+    scaler.fit_transform(df[features])
+    scaler_close.fit(df[["close"]])
+    model_input = df[features][-window:].values
+    model = load_model_from_bucket(model_data)
+    predicted_price = model.predict(model_input.reshape((1, model_input.shape[0], model_input.shapoe[1])))[0]
+    prediction = {
+        "date": add_business_day(model["end_date"], 1),
+        "close": round(predicted_price, 2)
+    }
+    update_running_predictions(model_data["_id"], prediction)
+
+
+
+def train_model(model_type, model_name, window, symbol, start_date, end_date, curr_date, epochs, features):
     data, train, test = get_data(symbol, features, start_date, end_date, curr_date)
     scaler = StandardScaler()
     close_scaler = StandardScaler()
     close_scaler.fit(train[["close"]])
-    train_scaled = scaler.fit_transform(train)
+    train_scaled = scaler.fit_transform(train.values)
     close_price_indx = features.index("close")
     X_train, y_train = extract_seqX_outcomeY(train_scaled, window, window, close_price_indx)
     X_test = extract_test_data(features, data, test, window, scaler)
@@ -124,7 +140,6 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, ep
     mape = calculate_mape(actual_price, predicted_price)
     direction = calculate_dir(actual_price, predicted_price)
     url = upload_to_bucket(model, model_name, symbol)
-    actual_ret = data[["date", "close"]].to_dict(orient="records")
     predicted_ret = pd.DataFrame(data={"date": data["date"][len(train):], "close": predicted_price}).to_dict(orient="records")
     loss_dict = {
         'loss': history.history['loss'],
@@ -197,6 +212,26 @@ def get_model_settings():
                     "name": "NVDA",
                     "features": get_features("NVDA"),
                     "minimum_date": get_minimum_date("NVDA")
+                },
+                {
+                    "name": "AAPL",
+                    "features": get_features("AAPL"),
+                    "minimum_date": get_minimum_date("AAPL")
+                },
+                {
+                    "name": "TSLA",
+                    "features": get_features("TSLA"),
+                    "minimum_date": get_minimum_date("TSLA")
+                },
+                {
+                    "name": "META",
+                    "features": get_features("META"),
+                    "minimum_date": get_minimum_date("META")
+                },
+                {
+                    "name": "AMZN",
+                    "features": get_features("AMZN"),
+                    "minimum_date": get_minimum_date("AMZN")
                 }
             ],
         "types": [
@@ -204,3 +239,44 @@ def get_model_settings():
         ]
     }
     return jsonify(settings)
+
+
+def get_ranges():
+    tickers = ["NVDA", "AAPL", "META", "AMZN", "TSLA"]
+    mins = []
+    maxs = []
+    for ticker in tickers:
+        min_date = get_minimum_date(ticker)
+        max_date = get_maximum_date(ticker)
+        mins.append(min_date)
+        maxs.append(max_date)
+    minimum_date = max(mins)
+    maximum_date = min(maxs)
+    return {"min_date": minimum_date, "max_date": maximum_date}
+
+
+def get_predictions(ticker, curr_date):
+    model_id = get_saved_model(ticker)
+    if not is_outside_trading_hours(curr_date):
+        next_day = add_business_day(curr_date, 1)
+        model_data = get_model_by_id(model_id)
+        for prediction in model_data["running_predictions"]:
+            date_str = next_day.strftime("%Y-%m-%d")
+            other_str = prediction["date"].strftime("%Y-%m-%d")
+            if date_str == other_str:
+                make_prediction(model_id)
+                break
+    return jsonify(model_data["running_predictions"])
+    
+
+def is_outside_trading_hours(dt):
+    trading_start = time(9, 30)
+    trading_end = time(16, 0)
+
+    if dt.weekday() >= 0 and dt.weekday() <= 4:
+        if dt.time() < trading_start or dt.time() > trading_end:
+            return True
+    else:
+        return True
+
+    return False

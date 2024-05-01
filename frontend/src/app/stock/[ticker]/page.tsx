@@ -10,8 +10,8 @@ import SentimentChartWrapper from "@/components/stock/sentimentChartWrapper";
 export default async function Page({ params }: { params: { ticker: string } }) {
 
   
-  const stockTwits = await fetch(`${process.env.API_URL}/stocktwits?symbol=${params.ticker}`, { next: { revalidate: 0 } }).then((res) => res.json());
-  const headlines = await fetch(`${process.env.API_URL}/headlines?symbol=${params.ticker}`, { next: { revalidate: 0 } }).then((res) => res.json());
+  // const stockTwits = await fetch(`${process.env.API_URL}/stocktwits?symbol=${params.ticker}`, { next: { revalidate: 0 } }).then((res) => res.json());
+  // const headlines = await fetch(`${process.env.API_URL}/headlines?symbol=${params.ticker}`, { next: { revalidate: 0 } }).then((res) => res.json());
   return (
     <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '0.25rem' }}>
       <Grid>
@@ -24,16 +24,16 @@ export default async function Page({ params }: { params: { ticker: string } }) {
           <ChartWrapper ticker={params.ticker} />
         </GridCol>
         <GridCol span={12}>
-          <SentimentChartWrapper ticker={params.ticker} />
+          {/* <SentimentChartWrapper ticker={params.ticker} /> */}
         </GridCol>
         <GridCol span={6}>
           <div style={{ height: "75vh" }}>
-            <TwitsFeed feed={stockTwits} title="StockTwits Feed" />
+            <TwitsFeed ticker={params.ticker} title="StockTwits Feed" />
           </div>
         </GridCol>
         <GridCol span={6} >
           <div style={{ height: "75vh" }}>
-            <HeadlineFeed feed={headlines} title="Headlines" />
+            <HeadlineFeed ticker={params.ticker} title="Headlines" />
           </div>
         </GridCol>
       </Grid>

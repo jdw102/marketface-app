@@ -142,6 +142,7 @@ const ModelCharts = ({ actual, predicted, loss, val_loss }: ModelChartsProps) =>
                                 { name: 'Predicted', color: 'teal' },
                             ]}
                             curveType='linear'
+                            withDots={closeData.length < 20}
                         />
                     </GridCol>
                 </Grid>

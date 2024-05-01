@@ -8,22 +8,20 @@ from dateutil.relativedelta import relativedelta
 
 
 
-def get_stock_data(ticker, timeframe):
+def get_stock_data(ticker, curr_date, timeframe):
     if timeframe is None:
         return jsonify({'error': 'Please provide a timeframe parameter.'}), 400
-    current_datetime = datetime.utcnow()
-    current_datetime -= relativedelta(years=5)
-    end_date = current_datetime
+    end_date = curr_date
     if timeframe == "1W":
-        start_date = (current_datetime - relativedelta(weeks=1))
+        start_date = (curr_date - relativedelta(weeks=1))
     elif timeframe == "1M":
-        start_date = (current_datetime - relativedelta(months=1))
+        start_date = (curr_date - relativedelta(months=1))
     elif timeframe == "3M":
-        start_date = (current_datetime - relativedelta(months=3))
+        start_date = (curr_date - relativedelta(months=3))
     elif timeframe == "YTD":
-        start_date = datetime(current_datetime.year, 1, 1)
+        start_date = datetime(curr_date.year, 1, 1)
     elif timeframe == "1Y":
-        start_date = (current_datetime - relativedelta(years=1))
+        start_date = (curr_date - relativedelta(years=1))
     else:
         start_date = datetime(1950, 1, 1)
     data = get_stock_prices(ticker, start_date, end_date)

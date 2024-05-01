@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react'
 import StockChart from './stockChart';
+import { getSimulatedDate } from '@/lib/timeDifference';
 
 export interface StockData {
     date: string;
@@ -16,11 +17,13 @@ const ChartWrapper = ({ ticker }: { ticker: string }) => {
 
     useEffect(() => {
         const fetchStockData = async () => {
+            const curr_date = getSimulatedDate(localStorage);
+            console.log(curr_date);
             try {  
-                const predictions = await fetch(`http://127.0.0.1:5000/predict?symbol=${ticker}&window=10`, { next: { revalidate: 0 } }).then((res) => res.json());
-                const response = await fetch(`http://127.0.0.1:5000/stock_data?symbol=${ticker}&timeframe=${timeframe}`);
+                // const predictions = await fetch(`http://127.0.0.1:5000/predict?symbol=${ticker}&window=10`, { next: { revalidate: 0 } }).then((res) => res.json());
+                const response = await fetch(`http://127.0.0.1:5000/stock_data?symbol=${ticker}&timeframe=${timeframe}&curr_date=${curr_date}`);
                 const data = await response.json();
-                setPredictions(predictions);
+                // setPredictions(predictions);
                 setStockData(data);
             } catch (error) {
                 console.error('Error fetching stock data:', error);

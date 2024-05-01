@@ -1,35 +1,33 @@
+"use client";
 import { useState, useEffect } from 'react';
 import React from 'react'
 import { DateTimePicker, DateValue } from '@mantine/dates';
+import { getSimulatedDate, updateSimulatedDate } from '@/lib/timeDifference';
 
-const DateTimeWrapper = ({ originalDate, handleDateChange }: {
-  originalDate: DateValue, handleDateChange: (date: DateValue) => void
+
+const DateTimeWrapper = ({ min_date, max_date }: {
+  min_date: Date, max_date: Date
 }) => {
+  const [selectedDate, setSelectedDate] = useState<DateValue>();
 
-  const [selectedDate, setSelectedDate] = useState<DateValue>(originalDate);
+  useEffect(() => {
+    const originalDate = getSimulatedDate(localStorage);
+    setSelectedDate(originalDate);
+  }, []);
 
-  // const tick = () => {
-  //   setSelectedDate(prevDate => {
-  //     if (!prevDate) {
-  //       return prevDate;
-  //     }
-  //     const newDate = new Date(prevDate);
-  //     newDate.setMinutes(newDate.getMinutes() + 1);
-  //     return newDate;
-  //   });
-  // };
-  // setInterval(() => tick(), 60000);
-
-
-  const handleSelectedDateChange = (date: DateValue) => {
-    setSelectedDate(date);
-  };
 
 
   return (
-    <DateTimePicker valueFormat="DD MMM YYYY hh:mm A" value={selectedDate} onChange={handleSelectedDateChange} submitButtonProps={{
-      onClick: () => handleDateChange(selectedDate),
-    }} />
+    <DateTimePicker
+      minDate={min_date}
+      maxDate={max_date}
+      label="Simulated Date"
+      valueFormat="DD MMM YYYY hh:mm A"
+      value={selectedDate}
+      onChange={(val) => {
+        updateSimulatedDate(val as Date, localStorage)
+        setSelectedDate(val)
+      }} />
   )
 }
 

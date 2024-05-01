@@ -1,4 +1,5 @@
 from flask import request, Blueprint
+from datetime import datetime
 from app.services.stock_service import get_stock_data, get_tickers, update_ticker_model_id
 
 stocks_api = Blueprint('stocks_api', __name__)
@@ -8,7 +9,9 @@ stocks_api = Blueprint('stocks_api', __name__)
 def stock_data():
     symbol = request.args.get('symbol')
     timeframe = request.args.get('timeframe')
-    stock_data = get_stock_data(symbol, timeframe)
+    curr_date = request.args.get('curr_date')
+    curr_date = datetime.strptime(curr_date, "%a %b %d %Y %H:%M:%S GMT%z (%Z)")
+    stock_data = get_stock_data(symbol, curr_date, timeframe)
     return stock_data
 
 
