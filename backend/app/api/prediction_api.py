@@ -11,7 +11,7 @@ def predict():
     curr_date = request.args.get('curr_date')
     curr_date = datetime.strptime(curr_date, "%a %b %d %Y %H:%M:%S GMT%z (%Z)")
     curr_date = curr_date.replace(tzinfo=None)
-    return make_prediction(symbol, curr_date)
+    return jsonify(make_prediction(symbol, curr_date))
 
 
 @prediction_api.route('/train', methods=['POST'])

@@ -1,18 +1,21 @@
 "use client"
-import { AppShell, Burger, Group, Skeleton, Text, Divider, Button, Image, Title, ActionIcon, Anchor } from '@mantine/core';
+import { AppShell, Burger, Group, Skeleton, Text, Divider, Button, Image, Title, ActionIcon, Anchor, Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconSettings } from '@tabler/icons-react';
+import { IconCalendar } from '@tabler/icons-react';
+import DateTimeWrapper from '../dateTimeWrapper';
 
 
-export function Shell({ children, tickers }: {
+export function Shell({ children, tickers, minDate, maxDate }: {
   children: React.ReactNode, tickers: {
     name: string,
     symbol: string,
     image: string
-  }[]
+  }[],
+  minDate: Date,
+  maxDate: Date
 }) {
   const [opened, { toggle }] = useDisclosure();
-
+  const [calendarOpened, { open, close }] = useDisclosure(false);
 
 
   return (
@@ -30,11 +33,9 @@ export function Shell({ children, tickers }: {
             <Image src="/logo.png" alt="Marketface" height={40} />
             <Title order={3} fw={700} ml="sm" mt={17} c="indigo">Marketface</Title>
           </a>
-          <Anchor href="/settings" display='flex'>
-            <ActionIcon variant='transparent' size='lg' radius='xl' color='gray' >
-              <IconSettings size={80} />
+            <ActionIcon variant='transparent' size='lg' radius='xl' color='gray' onClick={open}>
+              <IconCalendar size={60} />
             </ActionIcon>
-          </Anchor>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p="none">
@@ -68,6 +69,9 @@ export function Shell({ children, tickers }: {
         }
       </AppShell.Navbar>
       <AppShell.Main>{children}</AppShell.Main>
+      <Modal opened={calendarOpened} onClose={close} title="Change Simulated Date" centered>
+        <DateTimeWrapper minDate={minDate} maxDate={maxDate}/>
+      </Modal>
     </AppShell>
   );
 }

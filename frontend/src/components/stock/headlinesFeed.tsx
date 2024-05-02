@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Text, Paper, Grid, GridCol, Card, Title, Group, Tooltip, ActionIcon } from '@mantine/core';
+import { Text, Paper, Grid, GridCol, Card, Title, Group, Tooltip, ActionIcon, Image, Avatar } from '@mantine/core';
 import { getSimulatedDate } from '@/lib/timeDifference';
 import { IconRefresh } from '@tabler/icons-react';
 
@@ -34,7 +34,7 @@ const HeadlineFeed: React.FC<HeadlinesFeedProps> = ({ ticker, title }) => {
         }
         fetchHeadlines();
     }
-    , []);
+        , []);
 
     const fetchHeadlines = async () => {
         const curr_date = getSimulatedDate(localStorage);
@@ -53,7 +53,7 @@ const HeadlineFeed: React.FC<HeadlinesFeedProps> = ({ ticker, title }) => {
         fetchHeadlines();
         setLoading(false);
     }
-    
+
 
     return (
         <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" >
@@ -74,9 +74,12 @@ const HeadlineFeed: React.FC<HeadlinesFeedProps> = ({ ticker, title }) => {
 
                     return (
                         <Paper key={key} p="sm" shadow="xs" radius="md" style={{ marginBottom: '10px' }}>
-                                <Text size="sm" fw={500}>{formattedDate}</Text>
-                                <Text size="lg">{text.headline}</Text>
-                                <Text size="sm" c="gray" mt="xs">Benzinga</Text>
+                            <Group align="center" mb={20}>
+                                <Avatar src="/benzinga.webp" alt="Benzinga" radius="sm" size="sm" />
+                                <Text size="sm" fw={500}  >Benzinga</Text>
+                            </Group>
+                            <Text size="lg">{text.headline}</Text>
+                            <Text size="sm" c="gray" mt="xs">{formattedDate}</Text>
                         </Paper>
                     );
                 })}

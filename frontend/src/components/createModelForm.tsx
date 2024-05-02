@@ -30,7 +30,7 @@ interface ModelFormProps {
         }[],
         types: string[]
     },
-    ticker: string
+    ticker?: string
 }
 
 const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
@@ -55,7 +55,7 @@ const CreateModelForm = ({ settings, ticker }: ModelFormProps) => {
         initialValues: {
             model_name: '',
             model_type: settings.types[0],
-            stock: ticker,
+            stock: ticker? ticker: null,
             date_range: [null, null],
             features: ["close"],
             epochs: 10,

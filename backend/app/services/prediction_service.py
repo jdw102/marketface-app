@@ -1,6 +1,6 @@
 from app.db import get_model_data, save_model_metadata, get_saved_model, get_all_model_metadata
 from app.db import get_model_by_id, delete_model_by_id, get_minimum_date, get_features, get_all_saved_models
-from app.db import get_maximum_date, update_running_predictions, reset_running_predictions
+from app.db import get_maximum_date, update_running_predictions, reset_running_predictions, get_first_date_greater_than, update_running_stats
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 import numpy as np
@@ -92,25 +92,21 @@ def load_model_from_bucket(model_data):
     return model
 
 
-def add_business_day(date, num_days):
-    current_date = date
-    for _ in range(num_days):
-        current_date += timedelta(days=1)
-        while current_date.weekday() in [5, 6]:  # Saturday (5) or Sunday (6)
-            current_date += timedelta(days=1)  # Skip weekend
-    return current_date
-
-
 def make_prediction(ticker, curr_date):
     model_id = get_saved_model(ticker)
     model_data = get_model_by_id(model_id)
-    day_predicting = add_business_day(curr_date, 1)
+    day_predicting = get_first_date_greater_than(ticker, curr_date)
     if ("running_predictions" in model_data 
         and len(model_data["running_predictions"]) > 0
         and model_data["running_predictions"][-1]["date"].date() >= day_predicting.date()
         ) or not is_outside_trading_hours(curr_date):
         return model_data["running_predictions"]
     df = get_model_data(model_data["symbol"], day_predicting)
+    past_predicted_prices = [p["close"] for p in model_data["running_predictions"]]
+    past_actual_prices = df[['close']][-len(model_data["running_predictions"]):].values
+    running_rmse = calculate_rmse(past_actual_prices, past_predicted_prices)
+    running_mape = calculate_mape(past_actual_prices, past_predicted_prices)
+    running_direction = calculate_dir(past_actual_prices, past_predicted_prices)
     ## you're scaling by the entire dataset, not just the training data
     window = model_data["window"]
     features = model_data["features"]
@@ -122,13 +118,21 @@ def make_prediction(ticker, curr_date):
     model = load_model_from_bucket(model_data)
     predicted_price = model.predict(model_input.reshape((1, model_input.shape[0], model_input.shape[1])))
     predicted_price = scaler_close.inverse_transform(predicted_price)[0][0]
+    predicted_price = round(float(predicted_price), 2)
     prediction = {
         "date": day_predicting,
-        "close": round(float(predicted_price), 2)
+        "close": predicted_price
     }
+    update_running_stats(model_data["_id"], running_rmse, running_mape, running_direction)
     update_running_predictions(model_data["_id"], prediction)
     os.remove(f"./models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
-    return get_model_by_id(model_id)["running_predictions"]
+    return {
+            "predictions": get_model_by_id(model_id)["running_predictions"],
+            "rmse": running_rmse,
+            "mape": running_mape,
+            "direction": running_direction,
+            "name": model_data["model_name"]
+        }
 
 
 def train_model(model_type, model_name, window, symbol, start_date, end_date, curr_date, epochs, features):
@@ -174,7 +178,7 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, cu
         "running_predictions": [],
         "running_rmse": 0,
         "running_mape": 0,
-        "running_direction": 0,
+        "running_dir": 0,
     }
     id = save_model_metadata(model_metadata)
     return jsonify({"model_id": id})
@@ -270,7 +274,13 @@ def get_predictions(ticker, curr_date):
     model_data = get_model_by_id(model_id)
     if "running_predictions" not in model_data:
         return []   
-    return model_data["running_predictions"]
+    return {
+        "predictions": model_data["running_predictions"],
+        "rmse": model_data["running_rmse"],
+        "mape": model_data["running_mape"],
+        "direction": model_data["running_dir"],
+        "name": model_data["model_name"]
+        }
     
 
 def is_outside_trading_hours(dt):

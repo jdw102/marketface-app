@@ -12,8 +12,8 @@ interface ModelTableProps {
 }
 
 const ModelSelection = ({ models, saved_models }: ModelTableProps) => {
-    const initialModel = saved_models["NVDA"]
-    const [selectedStock, setSelectedStock] = useState<string | null>("NVDA")
+    const initialModel = saved_models[0].model_id
+    const [selectedStock, setSelectedStock] = useState<string | null>(saved_models[0].symbol)
     const [selectedModel, setSelectedModel] = useState<string | null>(initialModel)
     models = models.filter((model: any) => model.symbol === selectedStock)
     const [opened, { open, close }] = useDisclosure(false);
@@ -35,9 +35,9 @@ const ModelSelection = ({ models, saved_models }: ModelTableProps) => {
                     value={selectedStock}
                     onChange={(value) => {
                         setSelectedStock(value)
-                        setSelectedModel(value? saved_models[value]: initialModel)
+                        setSelectedModel(saved_models.find((model: any) => model.symbol === value)?.model_id || initialModel)
                     }}
-                    data={Object.keys(saved_models)}
+                    data={saved_models.map((model: any) => ({ value: model.symbol, label: model.symbol }))}
                     placeholder="Select a stock"
                 />
                 <Anchor href={`/create_model/${selectedStock}`}>
@@ -62,7 +62,7 @@ const ModelSelection = ({ models, saved_models }: ModelTableProps) => {
                     <Button onClick={() => {
                         handleSave(selectedModel)
                         close()
-                        router.refresh()
+                        window.location.reload()
                     }} >Save</Button>
                 </Group>
             </Modal>

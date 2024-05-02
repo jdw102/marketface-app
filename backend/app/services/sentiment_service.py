@@ -49,7 +49,6 @@ def get_stocktwits_sentiment_score(symbol, curr_date, timeframe):
         score = 0
     else:
         score = (num_pos - num_neg) / (num_pos + num_neg + num_neu)
-    print(round(score, 4))
     return {
         "score": round(score, 4),
         "num_pos": num_pos,
@@ -79,7 +78,7 @@ def get_headlines_sentiment_score(symbol, curr_date, timeframe):
     headlines = get_headlines_between(symbol, start_date, end_date)
     text = []
     for headline in headlines:
-        text.append(headline['title'])
+        text.append(headline['headline'])
     scores = news_classifier(text, truncation=True, padding=True)
     labels = []
     for data in scores:

@@ -15,7 +15,7 @@ def stock_data():
     curr_date = curr_date.replace(tzinfo=None)
     stock_data = get_stock_data(symbol, curr_date, timeframe)
     predictions = get_predictions(symbol, curr_date)
-    return jsonify({'stock_data': stock_data, 'predictions': predictions})
+    return jsonify({'stock_data': stock_data, 'model_stats': predictions})
 
 
 @stocks_api.route('/tickers', methods=['GET'])

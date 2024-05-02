@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, GridCol, Title, RingProgress, Group, Text, Card, Badge, Box, CardSection, Blockquote, Stack } from '@mantine/core';
+import { Grid, GridCol, Title, RingProgress, Group, Text, Card, Badge, Box, CardSection, Blockquote, Stack, Table, TableThead, TableTh, TableTbody, TableTr } from '@mantine/core';
 import ModelCharts from '@/components/model_info/modelCharts';
 import { BarChart } from '@mantine/charts';
 import { IconInfoCircle } from '@tabler/icons-react';
@@ -57,16 +57,19 @@ const Page = async ({ params }: { params: { id: string } }) => {
                 </GridCol>
                 <GridCol span={7}>
                     <Group justify='center'>
-                        <Stack >
-                            <Text size="xl" ta="center" fw={700}>
-                                Direction
-                            </Text>
+                        <Stack>
                             <RingProgress
-                                size={140}
+                                size={200}
+                                thickness={20}
                                 label={
-                                    <Text size="lg" fw={500} ta="center">
-                                        {Math.round(model_data.direction * 100 * 100) / 100}%
-                                    </Text>
+                                    <div>
+                                        <Text size="lg" fw={500} ta="center">
+                                            Direction:
+                                        </Text>
+                                        <Text size="lg" fw={500} ta="center">
+                                            {Math.round(model_data.direction * 100 * 100) / 100}%
+                                        </Text>
+                                    </div>
                                 }
                                 sections={[
                                     { value: (1 - model_data.direction * 100) * 100, color: 'red' },
@@ -74,41 +77,30 @@ const Page = async ({ params }: { params: { id: string } }) => {
                                 ]}
                             />
                         </Stack>
-                        <Stack justify='center' >
-                            <Text size="xl" ta="center" fw={700}>
-                                MAPE
-                            </Text>
-                            <RingProgress
-                                size={140}
-                                label={
-                                    <Text size="lg" fw={500} ta="center">
-                                        {Math.round(model_data.mape * 100) / 100}%
-                                    </Text>
-                                }
-                                sections={[
-                                    { value: (1 - model_data.mape / 10) * 100, color: 'green' },
-                                    { value: (model_data.mape / 10) * 100, color: 'red' },
-                                ]}
-                            />
-                        </Stack>
-                        <Stack >
-                            <Text size="xl" ta="center" fw={700}>
-                                RMSE
-                            </Text>
-                            <RingProgress
-                                size={140}
-                                label={
-                                    <Text size="lg" fw={500} ta="center">
-                                        {Math.round(model_data.rmse * 100) / 100}
-                                    </Text>
-                                }
-                                sections={[
-                                    { value: (1 - model_data.rmse / 10) * 100, color: 'green' },
-                                    { value: (model_data.rmse / 10) * 100, color: 'red' },
-                                ]}
-                            />
-
-                        </Stack>
+                        <Table ml={50} highlightOnHover highlightOnHoverColor='blue.0' w="50%" border={2}>
+                            <TableThead>
+                                <TableTr>
+                                    <TableTh ta="center"></TableTh>
+                                    <TableTh ta="center">RMSE</TableTh>
+                                    <TableTh ta="center">Direction</TableTh>
+                                    <TableTh ta="center">MAPE</TableTh>
+                                </TableTr>
+                            </TableThead>
+                            <TableTbody>
+                                <TableTr>
+                                    <TableTh ta="center">Testing</TableTh>
+                                    <TableTh fw={300} ta="center">{Math.round(model_data.rmse * 100) / 100}</TableTh>
+                                    <TableTh fw={300} ta="center">{Math.round(model_data.direction * 10000) / 10000}</TableTh>
+                                    <TableTh fw={300} ta="center">{Math.round(model_data.mape * 100) / 100}</TableTh>
+                                </TableTr>
+                                <TableTr>
+                                    <TableTh ta="center">Last Deployment</TableTh>
+                                    <TableTh fw={300} ta="center">{model_data.running_rmse ? Math.round(model_data.running_rmse * 100) / 100 : "N/A"}</TableTh>
+                                    <TableTh fw={300} ta="center">{model_data.running_dir ? Math.round(model_data.running_dir * 10000) / 10000 : "N/A"}</TableTh>
+                                    <TableTh fw={300} ta="center">{model_data.running_mape ? Math.round(model_data.running_mape * 100) / 100 : "N/A"}</TableTh>
+                                </TableTr>
+                            </TableTbody>
+                        </Table>
                     </Group>
                 </GridCol>
             </Grid>

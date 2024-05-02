@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react'
-import { Card, Group, Button, Select } from '@mantine/core';
+import { Card, Group, Button, Select, LoadingOverlay } from '@mantine/core';
 import { LineChart } from '@mantine/charts';
 import { getSimulatedDate } from '@/lib/timeDifference';
 
@@ -24,7 +24,7 @@ function formatDate(inputDate: string) {
 
     const monthName = months[monthIndex];
     const ending = day % 10 == 1 && day != 11 ? "st" : day % 10 == 2 && day != 12 ? "nd" : day % 10 == 3 && day != 13 ? "rd" : "th";
-    return `${monthName} ${day}${ending}`;
+    return `${monthName} ${day}${ending}` + ', ' + year.toString();
 }
 
 
@@ -52,17 +52,20 @@ const SentimentChart = ({ ticker, timeframeOptions }: SentimentChartProps) => {
     const [sentimentData, setSentimentData] = useState<SentimentData[]>([{
         date: ''
     }]);
+    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchStockData = async () => {
             const curr_date = getSimulatedDate(localStorage);
             try {
+                setLoading(true);
                 const response = await fetch(`http://127.0.0.1:5000/sentiment_timeseries?symbol=${ticker}&timeframe=${timeframe}&curr_date=${curr_date}`);
                 const data = await response.json();
                 data.map((d : SentimentData) => {
                     d.date = formatDate(d.date);
                 });
                 setSentimentData(data);
+                setLoading(false);
             } catch (error) {
                 console.error('Error fetching stock data:', error);
             }
@@ -81,7 +84,12 @@ const SentimentChart = ({ ticker, timeframeOptions }: SentimentChartProps) => {
                     data={sentimentData}
                     dataKey='date'
                     yAxisLabel='Score'
-                    xAxisLabel='Date'
+                    withLegend
+                    xAxisProps={{
+                        tickFormatter: (date: string) => {
+                            return date.split(',')[0]
+                        }
+                    }}
                     valueFormatter={(value) => {
                         return value.toFixed(2)
                     }}
@@ -92,7 +100,7 @@ const SentimentChart = ({ ticker, timeframeOptions }: SentimentChartProps) => {
                             color: colors[key],
                         }
                     })}
-                    withDots={timeframe == '1W'}
+                    withDots={sentimentData.length < 50}
                 />
             </div>
             <Group justify='center' mt={10}>
@@ -103,7 +111,7 @@ const SentimentChart = ({ ticker, timeframeOptions }: SentimentChartProps) => {
                     )
                 }
             </Group>
-
+            <LoadingOverlay visible={loading} />
         </Card>
     )
 }

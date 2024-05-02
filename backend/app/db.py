@@ -71,8 +71,6 @@ def get_past_stocktwits_sentiment(symbol, timeframe):
 
 
 def get_stock_prices(ticker, start_date, end_date):
-    print("End date:", end_date)
-    print("Ticker:", ticker)
     if ticker == "NVDA":     
         data = db.nvda_model_data.find({
             "date": {"$gte": start_date, "$lt": end_date}
@@ -115,6 +113,45 @@ def reset_running_predictions(model_id):
         {"$set": {"running_predictions": []}}
     )
 
+
+
+def get_first_date_greater_than(symbol, end_date):
+    if symbol == "NVDA":
+        data = db.nvda_model_data.find({
+            "date": {
+                "$gt": end_date
+            }
+        }).sort("date", 1).limit(1)
+    elif symbol == "AAPL":
+        data = db.aapl_model_data.find({
+            "date": {
+                "$gt": end_date
+            }
+        }).sort("date", 1).limit(1)
+    elif symbol == "META":
+        data = db.meta_model_data.find({
+            "date": {
+                "$gt": end_date
+            }
+        }).sort("date", 1).limit(1)
+    elif symbol == "AMZN":
+        data = db.amzn_model_data.find({
+            "date": {
+                "$gt": end_date
+            }
+        }).sort("date", 1).limit(1)
+    elif symbol == "TSLA":
+        data = db.tsla_model_data.find({
+            "date": {
+                "$gt": end_date
+            }
+        }).sort("date", 1).limit(1)
+    else:
+        return None
+    data = list(data)
+    if len(data) == 0:
+        return None
+    return data[0]["date"]
 
 
 def get_model_data(symbol, end_date):
@@ -216,10 +253,13 @@ def get_all_model_metadata():
 
 
 def get_all_saved_models():
-    models = {}
-    for ticker in db.tickers.find():
+    models = []
+    for ticker in db.tickers.find().sort("last_modified", -1):
         if "model_id" in ticker:
-            models[ticker["symbol"]] = ticker["model_id"]
+            models.append({
+                "symbol": ticker["symbol"],
+                "model_id": ticker["model_id"]
+            })
     return models
 
 
@@ -289,7 +329,7 @@ def get_features(symbol):
     elif symbol == "AAPL":
         data = db.aapl_model_data.find().sort("date", 1).limit(1)
     elif symbol == "META":
-        data = db.googl_model_data.find().sort("date", 1).limit(1)
+        data = db.meta_model_data.find().sort("date", 1).limit(1)
     elif symbol == "AMZN":
         data = db.amzn_model_data.find().sort("date", 1).limit(1)
     elif symbol == "TSLA":
@@ -316,7 +356,7 @@ def update_ticker_model(symbol, model_id):
     try:
         result = db.tickers.find_one_and_update(
             {"symbol": symbol},
-            {"$set": {"model_id": model_id}}
+            {"$set": {"model_id": model_id, "last_modified": datetime.now()}}
         )
     except Exception as e:
         return None
@@ -324,8 +364,24 @@ def update_ticker_model(symbol, model_id):
 
 
 def get_headlines_between(symbol, start_date, end_date):
+    start_date_str = f"{start_date.strftime("%Y-%m-%d %H:%M:%S")}-04:00"
+    end_date_str = f"{end_date.strftime("%Y-%m-%d %H:%M:%S")}-04:00"
     past_items = list(db.news.find({
         "stock": symbol,
-        "date": {"$gte": start_date, "$lt": end_date}
+        "date": {"$gte": start_date_str, "$lt": end_date_str}
     }).sort("date", -1))
     return past_items
+
+
+def get_analyst_ratings(ticker):
+    ratings = list(db.analyst_ratings.find({
+        "stock": ticker
+    }))
+    return pd.DataFrame(ratings)
+
+
+def update_running_stats(model_id, rmse, mape, dir):
+    db.model_metadata.update_one(
+        {"_id": model_id},
+        {"$push": {"running_rmse": rmse, "running_mape": mape, "running_dir": dir}}
+    )

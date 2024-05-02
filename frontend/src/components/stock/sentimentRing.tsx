@@ -92,14 +92,14 @@ const SentimentRing: React.FC<SentimentRingProps> = ({ title, ticker, api, timef
             <Center mb={20}>
                 {
                     loading || !sentimentData ?
-                        <Loader size={200}
+                        <Loader size={135}
                         /> :
                         <DonutChart
                             data={chartData}
-                            size={200}
+                            size={135}
                             paddingAngle={5}
                             withTooltip={sentimentData.num_neg + sentimentData.num_neu + sentimentData.num_pos > 0}
-                            thickness={25}
+                            thickness={18}
                             styles={{
                                 label: {
                                     fontSize: "1.5rem",
