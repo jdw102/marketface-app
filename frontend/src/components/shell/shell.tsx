@@ -1,8 +1,9 @@
 "use client"
-import { AppShell, Burger, Group, Skeleton, Text, Divider, Button, Image, Title, ActionIcon, Anchor, Modal } from '@mantine/core';
+import { AppShell, Burger, Group, Skeleton, Text, Divider, Button, Image, Title, ActionIcon, Anchor, Modal, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconCalendar } from '@tabler/icons-react';
 import DateTimeWrapper from '../dateTimeWrapper';
+import { IconSettingsAutomation } from '@tabler/icons-react';
 
 
 export function Shell({ children, tickers, minDate, maxDate }: {
@@ -16,26 +17,25 @@ export function Shell({ children, tickers, minDate, maxDate }: {
 }) {
   const [opened, { toggle }] = useDisclosure();
   const [calendarOpened, { open, close }] = useDisclosure(false);
-
+  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
+  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(false);
 
   return (
     <AppShell
       header={{ height: 75 }}
       navbar={{
-        width: 300, breakpoint: 'sm', collapsed: { mobile: !opened }
+        width: 300, breakpoint: 'sm', collapsed: { mobile: !mobileOpened, desktop: !desktopOpened }
       }}
       padding="md"
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify='space-between'>
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <a href="/" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="sm" size="sm" />
+          <Burger opened={desktopOpened} onClick={toggleDesktop} visibleFrom="sm" size="sm" />
+          <a href="/" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
             <Image src="/logo.png" alt="Marketface" height={40} />
             <Title order={3} fw={700} ml="sm" mt={17} c="indigo">Marketface</Title>
           </a>
-            <ActionIcon variant='transparent' size='lg' radius='xl' color='gray' onClick={open}>
-              <IconCalendar size={60} />
-            </ActionIcon>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p="none">
@@ -67,10 +67,24 @@ export function Shell({ children, tickers, minDate, maxDate }: {
         )
 
         }
+        <Group justify="space-between" mt="auto" mb={10}>
+          <Tooltip label="Models" position="top" withArrow>
+            <Anchor href="/models">
+              <ActionIcon  ml={10} variant='transparent' size='lg' radius='xl' color='gray' onClick={toggle}>
+                <IconSettingsAutomation size={60} />
+              </ActionIcon>
+            </Anchor>
+          </Tooltip>
+          <Tooltip label="Change Simulated Date" position="top" withArrow>
+            <ActionIcon mr={10} variant='transparent' size='lg' radius='xl' color='gray' onClick={open}>
+              <IconCalendar size={60} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
       </AppShell.Navbar>
       <AppShell.Main>{children}</AppShell.Main>
       <Modal opened={calendarOpened} onClose={close} title="Change Simulated Date" centered>
-        <DateTimeWrapper minDate={minDate} maxDate={maxDate}/>
+        <DateTimeWrapper minDate={minDate} maxDate={maxDate} />
       </Modal>
     </AppShell>
   );

@@ -122,8 +122,8 @@ const TwitsFeed: React.FC<TextFeedProps> = ({ title, ticker }) => {
                 }
                 )}
                 <LoadingOverlay
+                    zIndex={1}
                     visible={loading}
-                    zIndex={1000}
                     overlayProps={{ radius: 'sm', blur: 2 }}
                     loaderProps={{ color: 'pink', type: 'bars' }}
                 />

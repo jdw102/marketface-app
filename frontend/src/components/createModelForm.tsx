@@ -201,7 +201,7 @@ const CreateModelForm = ({ settings, ticker }: ModelFormProps) => {
                         </GridCol>
                     </Grid>
                     <LoadingOverlay visible={disabled}
-                        zIndex={1000}
+                        zIndex={1}
                         title="Training Model..."
                         overlayProps={{ radius: 'sm', blur: 2 }}
                         loaderProps={{ color: 'pink', type: 'bars' }} />

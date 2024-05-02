@@ -111,7 +111,7 @@ const SentimentChart = ({ ticker, timeframeOptions }: SentimentChartProps) => {
                     )
                 }
             </Group>
-            <LoadingOverlay visible={loading} />
+            <LoadingOverlay  zIndex={1} visible={loading} />
         </Card>
     )
 }

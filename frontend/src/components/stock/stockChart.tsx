@@ -167,6 +167,7 @@ const StockChart = ({ data, timeframe, handleMakePrediction, setTimeframe, loadi
                 }
             </Group>
             <LoadingOverlay
+                zIndex={1}
                 visible={loading || predicting}
                 loaderProps={{
                     type: predicting ? 'bars' : 'spinner',
