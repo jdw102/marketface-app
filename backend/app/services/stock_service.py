@@ -26,7 +26,7 @@ def get_stock_data(ticker, curr_date, timeframe):
         start_date = datetime(1950, 1, 1)
     data = get_stock_prices(ticker, start_date, end_date)
     data['date'] = data['date'].dt.strftime('%Y-%m-%d')
-    return jsonify(data.to_dict(orient="records"))
+    return data.to_dict(orient="records")
 
 
 def get_tickers():

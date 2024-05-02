@@ -78,7 +78,6 @@ const CreateModelForm = ({ settings, ticker }: ModelFormProps) => {
     const handleSubmit = async () => {
         try {
             setDisabled(true);
-            console.log(currentDate);
             const response = await fetch(`http://127.0.0.1:5000/train`, {
                 method: 'POST',
                 headers: {

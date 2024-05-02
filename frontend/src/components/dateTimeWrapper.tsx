@@ -15,7 +15,14 @@ const DateTimeWrapper = ({ min_date, max_date }: {
     setSelectedDate(originalDate);
   }, []);
 
-
+  const resetPredictions = async () => {
+    try {
+      await fetch('http://127.0.0.1:5000/reset_predictions', { method: 'POST' });
+    }
+    catch (error) {
+      console.error('Error resetting predictions:', error);
+    }
+  }
 
   return (
     <DateTimePicker
@@ -25,9 +32,15 @@ const DateTimeWrapper = ({ min_date, max_date }: {
       valueFormat="DD MMM YYYY hh:mm A"
       value={selectedDate}
       onChange={(val) => {
-        updateSimulatedDate(val as Date, localStorage)
         setSelectedDate(val)
-      }} />
+      }}
+      submitButtonProps={{
+        onClick: () => {
+          updateSimulatedDate(selectedDate as Date, localStorage)
+          resetPredictions()
+        }
+      }}
+    />
   )
 }
 

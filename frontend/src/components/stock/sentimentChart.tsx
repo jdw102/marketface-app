@@ -1,93 +1,104 @@
 "use client"
-import React, { useState } from 'react'
-import { Line } from 'react-chartjs-2'
-import { CategoryScale, Chart, LinearScale, PointElement, LineElement, Tooltip, ChartOptions } from "chart.js";
+import React, { useState, useEffect } from 'react'
 import { Card, Group, Button, Select } from '@mantine/core';
-import { SentimentData } from './sentimentChartWrapper';
+import { LineChart } from '@mantine/charts';
+import { getSimulatedDate } from '@/lib/timeDifference';
 
 
-Chart.register(CategoryScale);
-Chart.register(LinearScale);
-Chart.register(PointElement);
-Chart.register(LineElement);
-Chart.register(Tooltip);
+export interface SentimentData {
+    date: string;
+}
+
+const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+    "Aug", "Sep", "Oct", "Nov", "Dec"
+];
 
 
-function formatDate(dateString: string) {
-    const date = new Date(dateString);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    return `${month}/${day}`;
+
+function formatDate(inputDate: string) {
+    const parts = inputDate.split("-");
+    const year = parseInt(parts[0]);
+    const monthIndex = parseInt(parts[1]) - 1;
+    const day = parseInt(parts[2]);
+
+    const monthName = months[monthIndex];
+    const ending = day % 10 == 1 && day != 11 ? "st" : day % 10 == 2 && day != 12 ? "nd" : day % 10 == 3 && day != 13 ? "rd" : "th";
+    return `${monthName} ${day}${ending}`;
 }
 
 
+interface SentimentChartProps {
+    ticker: string,
+    timeframeOptions: string[],
+}
 
-const SentimentChart = ({ data, timeframe, setTimeframe }: {
-    data: {
-        stocktwits: SentimentData[]
-    },
-    timeframe: string,
-    setTimeframe: (timeframe: string) => void
-}) => {
-    const [selected, setSelected] = useState<'stocktwits'>('stocktwits');
-    const timeframeOptions = ['1W', '1M', '3M', 'YTD']
-    const dates = data[selected].map((d) => formatDate(d.date));
-    const prices = data[selected].map((d) => d.value);
-    const chartData = {
-        labels: dates,
-        datasets: [
-            {
-                label: 'Stock Price',
-                data: prices,
-                fill: false,
-                borderColor: 'rgb(192, 75, 192)',
-                tension: 0.1
+const colors = [
+    'blue',
+    'red',
+    'green',
+    'purple',
+    'orange',
+    'yellow',
+    'cyan',
+    'magenta',
+    'lime',
+    'pink',
+    'teal',
+]
+
+const SentimentChart = ({ ticker, timeframeOptions }: SentimentChartProps) => {
+    const [timeframe, setTimeframe] = useState<string>(timeframeOptions[0]);
+    const [sentimentData, setSentimentData] = useState<SentimentData[]>([{
+        date: ''
+    }]);
+
+    useEffect(() => {
+        const fetchStockData = async () => {
+            const curr_date = getSimulatedDate(localStorage);
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/sentiment_timeseries?symbol=${ticker}&timeframe=${timeframe}&curr_date=${curr_date}`);
+                const data = await response.json();
+                data.map((d : SentimentData) => {
+                    d.date = formatDate(d.date);
+                });
+                setSentimentData(data);
+            } catch (error) {
+                console.error('Error fetching stock data:', error);
             }
-        ]
-    }
-    const options: ChartOptions<'line'> = {
-        maintainAspectRatio: false,
-        plugins: {
-            tooltip: {
-                enabled: timeframe === '1W' || timeframe === '1M' || timeframe === '3M' || timeframe === 'YTD',
-                callbacks: {
-                    label: function (context) {
-                        return context.parsed.y.toFixed(2);
-                    }
-                }
-            }
-        },
-        elements: {
-            point:{
-                radius: timeframe === '1W' || timeframe === '1M' || timeframe === '3M' || timeframe === 'YTD' ? 3: 0
-            }
-        }
-    };
+        };
 
-    const handleSelection = (type: 'stocktwits' | string | null) => {
-        if (type == null || (type != 'stocktwits')) {
-            setSelected('stocktwits');
-            return;
-        }
+        fetchStockData();
+    }, [ticker, timeframe]);
 
-        setSelected(type);
-    }
 
+    const keys = Object.keys(sentimentData[0]).filter(key => key !== 'date');
     return (
         <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" >
-            <Select data={[
-                {
-                    label: 'StockTwits Sentiment',
-                    value: 'stocktwits'
-                }
-            ]} value={selected} onChange={(value) => handleSelection(value)} />
-            <div style={{height: '60vh', marginTop: 10}}>
-                <Line data={chartData} options={options} />
+            <div style={{ height: '60vh', marginTop: 10 }}>
+                <LineChart
+                    h="100%"
+                    data={sentimentData}
+                    dataKey='date'
+                    yAxisLabel='Score'
+                    xAxisLabel='Date'
+                    valueFormatter={(value) => {
+                        return value.toFixed(2)
+                    }}
+                    tooltipAnimationDuration={300}
+                    series={keys.map((value, key) => {
+                        return {
+                            name: value,
+                            color: colors[key],
+                        }
+                    })}
+                    withDots={timeframe == '1W'}
+                />
             </div>
             <Group justify='center' mt={10}>
                 {
                     timeframeOptions.map((option) => {
-                        return <Button variant={timeframe == option ? "filled" : "subtle"} size='sm' key={option} onClick={() => setTimeframe(option)}>{option}</Button>
+                        return <Button variant={timeframe == option ? "filled" : "light"} size='sm' key={option} onClick={() => setTimeframe(option)}>{option}</Button>
                     }
                     )
                 }

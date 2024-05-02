@@ -1,7 +1,8 @@
 "use client";
 import React, { use, useEffect, useState } from 'react';
-import { Text, Paper, Avatar, Badge, Card, Title, Group } from '@mantine/core';
+import { Text, Paper, Avatar, Badge, Card, Title, Group, ActionIcon, Tooltip, LoadingOverlay } from '@mantine/core';
 import { getSimulatedDate } from '@/lib/timeDifference';
+import { IconRefresh } from '@tabler/icons-react';
 
 
 interface Text {
@@ -24,13 +25,14 @@ interface TextFeedProps {
 const TwitsFeed: React.FC<TextFeedProps> = ({ title, ticker }) => {
     const [feed, setFeed] = useState<Text[]>([]);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchStockTwits = async () => {
             const curr_date = getSimulatedDate(localStorage);
             setCurrentTime(curr_date);
             try {
-                const response = await fetch(`http://127.0.0.1:5000/stocktwits?symbol=${ticker}&curr_date=${curr_date.toISOString()}`, { next: { revalidate: 0 } });
+                const response = await fetch(`http://127.0.0.1:5000/stocktwits?symbol=${ticker}&curr_date=${curr_date.toISOString()}&num=${10}`, { next: { revalidate: 0 } });
                 const data = await response.json();
                 setFeed(data.twits);
             } catch (error) {
@@ -40,10 +42,36 @@ const TwitsFeed: React.FC<TextFeedProps> = ({ title, ticker }) => {
         fetchStockTwits();
     }, []);
 
+    const fetchStockTwits = async () => {
+        const curr_date = getSimulatedDate(localStorage);
+        setCurrentTime(curr_date);
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/stocktwits?symbol=${ticker}&curr_date=${curr_date.toISOString()}&num=${10}`, { next: { revalidate: 0 } });
+            const data = await response.json();
+            setFeed(data.twits);
+        } catch (error) {
+            console.error('Error fetching stocktwits:', error);
+        }
+    }
+
+
+    const handleClick = async () => {
+        setLoading(true);
+        fetchStockTwits();
+        setLoading(false);
+    }
+
 
     return (
         <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" >
-            <Title order={4} ta="left" pb={10}>{title}</Title>
+            <Group pb={10} justify="space-between">
+                <Title order={4} ta="left" >{title}</Title>
+                <Tooltip label="Refresh" position="top" withArrow>
+                    <ActionIcon variant="transparent" size='lg' style={{ marginLeft: '10px' }} onClick={() => handleClick()}>
+                        <IconRefresh />
+                    </ActionIcon>
+                </Tooltip>
+            </Group>
             <div style={{ overflowY: 'scroll' }}>
                 {feed.map((text) => {
                     const calculateTimeSincePosted = (createdAt: string): { hours: string, minutes: string } => {
@@ -93,6 +121,12 @@ const TwitsFeed: React.FC<TextFeedProps> = ({ title, ticker }) => {
                     )
                 }
                 )}
+                <LoadingOverlay
+                    visible={loading}
+                    zIndex={1000}
+                    overlayProps={{ radius: 'sm', blur: 2 }}
+                    loaderProps={{ color: 'pink', type: 'bars' }}
+                />
             </div>
         </Card>
     );

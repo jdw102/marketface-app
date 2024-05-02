@@ -14,6 +14,15 @@ interface ModelTableProps {
 }
 
 
+function formatDate(dateString: string) {
+    const date = new Date(dateString);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`
+}
+
+
 const ModelTable = ({ models, setSelectedModel, selectedModelId, initialSelected }: ModelTableProps) => {
 
     const router = useRouter();
@@ -138,7 +147,7 @@ const ModelTable = ({ models, setSelectedModel, selectedModelId, initialSelected
                                 <TableTh fw={300}>{Math.round(model.mape * 1000) / 1000}</TableTh>
                                 <TableTh fw={300}>{Math.round(model.rmse * 1000) / 1000}</TableTh>
                                 <TableTh fw={300}>{Math.round(model.direction * 100) / 100}</TableTh>
-                                <TableTh fw={300}>{model.created}</TableTh>
+                                <TableTh fw={300}>{formatDate(model.created)}</TableTh>
                                 <TableTh>
                                     <ActionIcon disabled={model._id == initialSelected} variant='transparent' onClick={() => {
                                         setSelectedId(model._id)

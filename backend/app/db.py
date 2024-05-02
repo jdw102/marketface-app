@@ -25,14 +25,21 @@ def get_all_tickers():
         tickers.append(ticker)
     return tickers
 
-def get_past_day_stocktwits(symbol, curr_date):
-    day_before = curr_date - timedelta(days=1)
-    print(day_before, curr_date)
+def get_past_stocktwits(symbol, curr_date, num):
     past_items = list(db.stocktwits.find({
         "stock": symbol,
-        "created_at": {"$gt": day_before, "$lt": curr_date}
+        "created_at": {"$lt": curr_date}
+    }).sort("created_at", -1).limit(num))
+    return past_items
+
+
+def get_stocktwits_between(symbol, start_date, end_date):
+    past_items = list(db.stocktwits.find({
+        "stock": symbol,
+        "created_at": {"$gte": start_date, "$lt": end_date}
     }).sort("created_at", -1))
     return past_items
+
 
 
 def get_past_headlines(symbol, curr_date, num=10):
@@ -63,33 +70,31 @@ def get_past_stocktwits_sentiment(symbol, timeframe):
     return past_items
 
 
-def get_model_input(ticker, window):
-    current_datetime = datetime.utcnow()
-    current_datetime -= relativedelta(years=5)
-    end_date = current_datetime
-    start_date = current_datetime
-    business_days = 0
-    while business_days < window:
-        if start_date.weekday() < 5:
-            business_days += 1
-        start_date -= relativedelta(days=1)
-    if ticker == "NVDA":
+def get_stock_prices(ticker, start_date, end_date):
+    print("End date:", end_date)
+    print("Ticker:", ticker)
+    if ticker == "NVDA":     
         data = db.nvda_model_data.find({
             "date": {"$gte": start_date, "$lt": end_date}
         }).sort("date", 1)
-    else:
-        data = db.nvda_model_data.find({
+    elif ticker == "AAPL":
+        data = db.aapl_model_data.find({
             "date": {"$gte": start_date, "$lt": end_date}
-        }).sort("date", 1)    
-    data = list(data)
-    data = pd.DataFrame(data)
-    data = data[["date", "open", "high", "low", "close", "volume", "thresholded_social_media_sentiment"]]
-    return data
-
-def get_stock_prices(ticker, start_date, end_date):
-    data = db.nvda_model_data.find({
-        "date": {"$gte": start_date, "$lt": end_date}
-    }).sort("date", 1)
+        }).sort("date", 1)
+    elif ticker == "META":
+        data = db.meta_model_data.find({
+            "date": {"$gte": start_date, "$lt": end_date}
+        }).sort("date", 1)
+    elif ticker == "AMZN":
+        data = db.amzn_model_data.find({
+            "date": {"$gte": start_date, "$lt": end_date}
+        }).sort("date", 1)
+    elif ticker == "TSLA":
+        data = db.tsla_model_data.find({
+            "date": {"$gte": start_date, "$lt": end_date}
+        }).sort("date", 1)
+    else: 
+        return None
     data = list(data)
     data = pd.DataFrame(data)
     data = data[["date", "open", "high", "low", "close", "volume"]]
@@ -100,7 +105,14 @@ def get_stock_prices(ticker, start_date, end_date):
 def update_running_predictions(model_id, prediction):
     db.model_metadata.update_one(
         {"_id": model_id},
-        {"$push": {"running_predictions": model_id}}
+        {"$push": {"running_predictions": prediction}}
+    )
+
+
+def reset_running_predictions(model_id):
+    db.model_metadata.update_one(
+        {"_id": model_id},
+        {"$set": {"running_predictions": []}}
     )
 
 
@@ -133,6 +145,49 @@ def get_model_data(symbol, end_date):
     elif symbol == "TSLA":
         data = db.tsla_model_data.find({
             "date": {
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    else:
+        data = None
+    data = list(data)
+    data = pd.DataFrame(data)
+    return data
+
+
+def get_model_data_between(symbol, start_date, end_date):
+    if symbol == "NVDA":
+        data = db.nvda_model_data.find({
+            "date": {
+                "$gte": start_date,
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    elif symbol == "AAPL":
+        data = db.aapl_model_data.find({
+            "date": {
+                "$gte": start_date,
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    elif symbol == "META":
+        data = db.meta_model_data.find({
+            "date": {
+                "$gte": start_date,
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    elif symbol == "AMZN":
+        data = db.amzn_model_data.find({
+            "date": {
+                "$gte": start_date,
+                "$lt": end_date
+                }
+        }).sort("date", 1)
+    elif symbol == "TSLA":
+        data = db.tsla_model_data.find({
+            "date": {
+                "$gte": start_date,
                 "$lt": end_date
                 }
         }).sort("date", 1)
@@ -252,6 +307,13 @@ def get_features(symbol):
 
 def update_ticker_model(symbol, model_id):
     try:
+        result = db.model_metadata.find_one_and_update(
+            {"_id": ObjectId(model_id)},
+            {"$set": {"running_predictions": []}}
+        )
+    except Exception as e:
+        return None
+    try:
         result = db.tickers.find_one_and_update(
             {"symbol": symbol},
             {"$set": {"model_id": model_id}}
@@ -259,3 +321,11 @@ def update_ticker_model(symbol, model_id):
     except Exception as e:
         return None
     return result
+
+
+def get_headlines_between(symbol, start_date, end_date):
+    past_items = list(db.news.find({
+        "stock": symbol,
+        "date": {"$gte": start_date, "$lt": end_date}
+    }).sort("date", -1))
+    return past_items

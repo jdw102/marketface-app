@@ -1,4 +1,6 @@
-from app.db import get_model_input, get_model_data, save_model_metadata, get_saved_model, get_all_model_metadata, get_model_by_id, delete_model_by_id, get_minimum_date, get_features, get_all_saved_models, get_maximum_date, update_running_predictions
+from app.db import get_model_data, save_model_metadata, get_saved_model, get_all_model_metadata
+from app.db import get_model_by_id, delete_model_by_id, get_minimum_date, get_features, get_all_saved_models
+from app.db import get_maximum_date, update_running_predictions, reset_running_predictions
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 import numpy as np
@@ -9,8 +11,7 @@ from tensorflow.keras.models import Model
 from google.cloud import storage
 import os
 from google.cloud import storage
-from datetime import timedelta
-import time
+from datetime import timedelta, time
 
 
 def extract_seqX_outcomeY(data, N, offset, y_feature):
@@ -88,7 +89,6 @@ def load_model_from_bucket(model_data):
     blob = bucket.blob(f"models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
     blob.download_to_filename(f"./models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
     model = tf.keras.models.load_model(f"./models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
-    os.remove(f"./models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
     return model
 
 
@@ -101,9 +101,17 @@ def add_business_day(date, num_days):
     return current_date
 
 
-def make_prediction(model_id):
+def make_prediction(ticker, curr_date):
+    model_id = get_saved_model(ticker)
     model_data = get_model_by_id(model_id)
-    df = get_model_data(model_data["symbol"], model_data["end_date"])
+    day_predicting = add_business_day(curr_date, 1)
+    if ("running_predictions" in model_data 
+        and len(model_data["running_predictions"]) > 0
+        and model_data["running_predictions"][-1]["date"].date() >= day_predicting.date()
+        ) or not is_outside_trading_hours(curr_date):
+        return model_data["running_predictions"]
+    df = get_model_data(model_data["symbol"], day_predicting)
+    ## you're scaling by the entire dataset, not just the training data
     window = model_data["window"]
     features = model_data["features"]
     scaler = StandardScaler()
@@ -112,13 +120,15 @@ def make_prediction(model_id):
     scaler_close.fit(df[["close"]])
     model_input = df[features][-window:].values
     model = load_model_from_bucket(model_data)
-    predicted_price = model.predict(model_input.reshape((1, model_input.shape[0], model_input.shapoe[1])))[0]
+    predicted_price = model.predict(model_input.reshape((1, model_input.shape[0], model_input.shape[1])))
+    predicted_price = scaler_close.inverse_transform(predicted_price)[0][0]
     prediction = {
-        "date": add_business_day(model["end_date"], 1),
-        "close": round(predicted_price, 2)
+        "date": day_predicting,
+        "close": round(float(predicted_price), 2)
     }
     update_running_predictions(model_data["_id"], prediction)
-
+    os.remove(f"./models/{model_data['symbol'].lower()}/{model_data['model_name']}.keras")
+    return get_model_by_id(model_id)["running_predictions"]
 
 
 def train_model(model_type, model_name, window, symbol, start_date, end_date, curr_date, epochs, features):
@@ -257,16 +267,10 @@ def get_ranges():
 
 def get_predictions(ticker, curr_date):
     model_id = get_saved_model(ticker)
-    if not is_outside_trading_hours(curr_date):
-        next_day = add_business_day(curr_date, 1)
-        model_data = get_model_by_id(model_id)
-        for prediction in model_data["running_predictions"]:
-            date_str = next_day.strftime("%Y-%m-%d")
-            other_str = prediction["date"].strftime("%Y-%m-%d")
-            if date_str == other_str:
-                make_prediction(model_id)
-                break
-    return jsonify(model_data["running_predictions"])
+    model_data = get_model_by_id(model_id)
+    if "running_predictions" not in model_data:
+        return []   
+    return model_data["running_predictions"]
     
 
 def is_outside_trading_hours(dt):
@@ -280,3 +284,12 @@ def is_outside_trading_hours(dt):
         return True
 
     return False
+
+
+def clear_all_predictions():
+    tickers = ["NVDA", "AAPL", "META", "AMZN", "TSLA"]
+    for ticker in tickers:
+        model_id = get_saved_model(ticker)
+        model_data = get_model_by_id(model_id)
+        reset_running_predictions(model_data["_id"])
+    return jsonify({"success": True})

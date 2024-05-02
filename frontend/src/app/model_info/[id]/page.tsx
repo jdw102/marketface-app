@@ -31,7 +31,7 @@ const Page = async ({ params }: { params: { id: string } }) => {
     return (
         <div>
             <Grid mb={20} align='center'>
-                <GridCol span={4}>
+                <GridCol span={5}>
                     <Blockquote color="blue" cite={formatDate(model_data.created)} icon={icon}>
                         <Group justify='center'>
                             <Title order={3}>
@@ -55,14 +55,14 @@ const Page = async ({ params }: { params: { id: string } }) => {
                         </Group>
                     </Blockquote>
                 </GridCol>
-                <GridCol span={8}>
+                <GridCol span={7}>
                     <Group justify='center'>
-                        <Stack m={20}>
+                        <Stack >
                             <Text size="xl" ta="center" fw={700}>
-                                Direction Accuracy
+                                Direction
                             </Text>
                             <RingProgress
-                                size={180}
+                                size={140}
                                 label={
                                     <Text size="lg" fw={500} ta="center">
                                         {Math.round(model_data.direction * 100 * 100) / 100}%
@@ -74,12 +74,12 @@ const Page = async ({ params }: { params: { id: string } }) => {
                                 ]}
                             />
                         </Stack>
-                        <Stack justify='center' m={20}>
+                        <Stack justify='center' >
                             <Text size="xl" ta="center" fw={700}>
                                 MAPE
                             </Text>
                             <RingProgress
-                                size={180}
+                                size={140}
                                 label={
                                     <Text size="lg" fw={500} ta="center">
                                         {Math.round(model_data.mape * 100) / 100}%
@@ -91,12 +91,12 @@ const Page = async ({ params }: { params: { id: string } }) => {
                                 ]}
                             />
                         </Stack>
-                        <Stack m={20}>
+                        <Stack >
                             <Text size="xl" ta="center" fw={700}>
                                 RMSE
                             </Text>
                             <RingProgress
-                                size={180}
+                                size={140}
                                 label={
                                     <Text size="lg" fw={500} ta="center">
                                         {Math.round(model_data.rmse * 100) / 100}
