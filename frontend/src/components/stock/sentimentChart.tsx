@@ -78,9 +78,9 @@ const SentimentChart = ({ ticker, timeframeOptions }: SentimentChartProps) => {
     const keys = Object.keys(sentimentData[0]).filter(key => key !== 'date');
     return (
         <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" >
-            <div style={{ height: '60vh', marginTop: 10 }}>
+            <div >
                 <LineChart
-                    h="100%"
+                    h={"80vh"}
                     data={sentimentData}
                     dataKey='date'
                     yAxisLabel='Score'

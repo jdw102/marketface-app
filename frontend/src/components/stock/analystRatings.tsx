@@ -35,7 +35,6 @@ const AnalystRatings = ({ ticker, title }: { ticker: string, title: string }) =>
         fetchAnalystStats()
     }, [])
 
-    console.log(analystStats)
 
     return (
         <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" >

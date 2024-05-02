@@ -26,7 +26,6 @@ const StockChart = ({ data, timeframe, handleMakePrediction, setTimeframe, loadi
     modelStats: any
 }) => {
 
-    console.log(modelStats)
 
     const [selected, setSelected] = useState<'closingPrice' | 'openPrice' | 'highPrice' | 'volume'>('closingPrice');
     const [showModal, setShowModal] = useState<boolean>(false);
@@ -47,7 +46,7 @@ const StockChart = ({ data, timeframe, handleMakePrediction, setTimeframe, loadi
 
 
     return (
-        <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" >
+        <div>
             <Group justify='space-between'>
                 <Select data={[
                     {
@@ -67,25 +66,8 @@ const StockChart = ({ data, timeframe, handleMakePrediction, setTimeframe, loadi
                         value: 'volume'
                     }
                 ]} value={selected} onChange={(value) => handleSelection(value)} />
-                <Group>
-                    <Tooltip
-                        label="Model Info"
-                        position="left"
-                        withArrow
-                    >
-                        <ActionIcon variant='transparent' size='lg' radius='xl' color='gray' onClick={() => setShowModal(true)}>
-                            <IconInfoCircle size={60} />
-                        </ActionIcon>
-                    </Tooltip>
-                    <Button variant="filled" onClick={() => handleMakePrediction()}>
-                        <Group>
-                            <IconGraph />
-                            Make Prediction
-                        </Group>
-                    </Button>
-                </Group>
             </Group>
-            <div style={{ height: '60vh', marginTop: 10 }}>
+            <div style={{ height: '80vh', marginTop: 10 }}>
                 <LineChart
                     h="100%"
                     data={data[selected]}
@@ -173,30 +155,7 @@ const StockChart = ({ data, timeframe, handleMakePrediction, setTimeframe, loadi
                     type: predicting ? 'bars' : 'spinner',
                 }}
             />
-            <Modal opened={showModal} onClose={() => setShowModal(false)} title="Running Stats" centered>
-                <Text size="sm">
-                    The {modelStats && modelStats.name} model's predictions are compared to the actual stock prices. The following metrics describe its current performance:
-                </Text>
-                {modelStats &&
-                    <Table mt={20}>
-                        <TableThead>
-                            <TableTr>
-                                <TableTh ta="center">RMSE</TableTh>
-                                <TableTh ta="center">Direction</TableTh>
-                                <TableTh ta="center">MAPE</TableTh>
-                            </TableTr>
-                        </TableThead>
-                        <TableTbody>
-                            <TableTr>
-                                <TableTh fw={300} ta="center">{Math.round(modelStats.rmse * 100) / 100}</TableTh>
-                                <TableTh fw={300} ta="center">{Math.round(modelStats.direction * 100) / 100}</TableTh>
-                                <TableTh fw={300} ta="center">{Math.round(modelStats.mape * 100) / 100}</TableTh>
-                            </TableTr>
-                        </TableTbody>
-                    </Table>
-                }
-            </Modal>
-        </Card>
+        </div>
     )
 }
 

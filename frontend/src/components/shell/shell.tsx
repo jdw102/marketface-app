@@ -24,7 +24,7 @@ export function Shell({ children, tickers, minDate, maxDate }: {
     <AppShell
       header={{ height: 75 }}
       navbar={{
-        width: 300, breakpoint: 'sm', collapsed: { mobile: !mobileOpened, desktop: !desktopOpened }
+        width: 300, breakpoint: 'sm', collapsed: { mobile: !mobileOpened, desktop: !desktopOpened }, 
       }}
       padding="md"
     >
@@ -38,7 +38,7 @@ export function Shell({ children, tickers, minDate, maxDate }: {
           </a>
         </Group>
       </AppShell.Header>
-      <AppShell.Navbar p="none">
+      <AppShell.Navbar p="none" >
         {tickers ? (
           tickers.map((ticker: {
             name: string,

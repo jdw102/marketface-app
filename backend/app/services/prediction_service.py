@@ -47,16 +47,19 @@ def calculate_mape(y_true, y_pred):
 
 def calculate_dir(actual_prices, predicted_prices):
     total = 0
-    for i, predicted in enumerate(predicted_prices[1:]):
-        actual = actual_prices[i]
-        prev = actual_prices[i - 1]
-        if actual > prev:
-            if predicted > prev:
+    print(actual_prices)
+    print(predicted_prices)
+    for i in range(len(predicted_prices)):
+        prev_price = actual_prices[i - 1]
+        actual_price = actual_prices[i]
+        predicted_price = predicted_prices[i]
+        if actual_price > prev_price:
+            if predicted_price > prev_price:
                 total += 1
         else:
-            if predicted < prev:
+            if predicted_price < prev_price:
                 total += 1
-    return total / (len(predicted_prices) - 1)
+    return total / len(predicted_prices)
 
 
 def create_model(X_train, layer_units=50, loss="mean_squared_error", optimizer="rmsprop"):
@@ -96,17 +99,30 @@ def make_prediction(ticker, curr_date):
     model_id = get_saved_model(ticker)
     model_data = get_model_by_id(model_id)
     day_predicting = get_first_date_greater_than(ticker, curr_date)
+    print("Day predicting: ", day_predicting)
     if ("running_predictions" in model_data 
         and len(model_data["running_predictions"]) > 0
         and model_data["running_predictions"][-1]["date"].date() >= day_predicting.date()
         ) or not is_outside_trading_hours(curr_date):
-        return model_data["running_predictions"]
+        
+        return {
+            "predictions": model_data["running_predictions"],
+            "rmse": model_data["running_rmse"],
+            "mape": model_data["running_mape"],
+            "direction": model_data["running_dir"],
+            "name": model_data["model_name"]
+        }
     df = get_model_data(model_data["symbol"], day_predicting)
     past_predicted_prices = [p["close"] for p in model_data["running_predictions"]]
     past_actual_prices = df[['close']][-len(model_data["running_predictions"]):].values
-    running_rmse = calculate_rmse(past_actual_prices, past_predicted_prices)
-    running_mape = calculate_mape(past_actual_prices, past_predicted_prices)
-    running_direction = calculate_dir(past_actual_prices, past_predicted_prices)
+    if len(past_predicted_prices) > 1:
+        running_rmse = calculate_rmse(past_actual_prices, past_predicted_prices)
+        running_mape = calculate_mape(past_actual_prices, past_predicted_prices)
+        running_direction = calculate_dir(past_actual_prices, past_predicted_prices)
+    else:
+        running_rmse = 0
+        running_mape = 0
+        running_direction = 0
     ## you're scaling by the entire dataset, not just the training data
     window = model_data["window"]
     features = model_data["features"]
@@ -273,7 +289,8 @@ def get_predictions(ticker, curr_date):
     model_id = get_saved_model(ticker)
     model_data = get_model_by_id(model_id)
     if "running_predictions" not in model_data:
-        return []   
+        return []
+    print(model_data["running_predictions"])
     return {
         "predictions": model_data["running_predictions"],
         "rmse": model_data["running_rmse"],

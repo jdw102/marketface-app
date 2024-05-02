@@ -110,7 +110,7 @@ def update_running_predictions(model_id, prediction):
 def reset_running_predictions(model_id):
     db.model_metadata.update_one(
         {"_id": model_id},
-        {"$set": {"running_predictions": []}}
+        {"$set": {"running_predictions": [], "running_rmse": 0, "running_mape": 0, "running_dir": 0}}
     )
 
 
@@ -383,5 +383,5 @@ def get_analyst_ratings(ticker):
 def update_running_stats(model_id, rmse, mape, dir):
     db.model_metadata.update_one(
         {"_id": model_id},
-        {"$push": {"running_rmse": rmse, "running_mape": mape, "running_dir": dir}}
+        {"$set": {"running_rmse": rmse, "running_mape": mape, "running_dir": dir}}
     )

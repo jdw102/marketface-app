@@ -88,7 +88,7 @@ const ModelTable = ({ models, setSelectedModel, selectedModelId, initialSelected
             sort: 'rmse'
         },
         {
-            text: 'Direction Accuracy',
+            text: 'Direction',
             sort: 'direction'
         },
         {
@@ -110,10 +110,10 @@ const ModelTable = ({ models, setSelectedModel, selectedModelId, initialSelected
                             <TableTh></TableTh>
                             {
                                 columns.map((column) => (
-                                    <TableTh key={column.sort}>
+                                    <TableTh ta="center" key={column.sort}>
                                         {column.text}
                                         <UnstyledButton onClick={() => handleSort(column.sort)}>
-                                            <Text size="xs">
+                                            <Text  size="xs">
                                                 {sortColumn === column.sort && sortDirection === 'asc' ? '▲' : '▼'}
                                             </Text>
                                         </UnstyledButton>
@@ -138,16 +138,16 @@ const ModelTable = ({ models, setSelectedModel, selectedModelId, initialSelected
                                         </ActionIcon>
                                     </Anchor>
                                 </TableTh>
-                                <TableTh fw={300}>{model.model_name}</TableTh>
-                                <TableTh fw={300}>{model.symbol}</TableTh>
-                                <TableTh fw={300}>{model.features.length}</TableTh>
-                                <TableTh fw={300}>{model.model_type}</TableTh>
-                                <TableTh fw={300}>{model.epochs}</TableTh>
-                                <TableTh fw={300}>{model.window}</TableTh>
-                                <TableTh fw={300}>{Math.round(model.mape * 1000) / 1000}</TableTh>
-                                <TableTh fw={300}>{Math.round(model.rmse * 1000) / 1000}</TableTh>
-                                <TableTh fw={300}>{Math.round(model.direction * 100) / 100}</TableTh>
-                                <TableTh fw={300}>{formatDate(model.created)}</TableTh>
+                                <TableTh ta="center" fw={300}>{model.model_name}</TableTh>
+                                <TableTh ta="center" fw={300}>{model.symbol}</TableTh>
+                                <TableTh ta="center" fw={300}>{model.features.length}</TableTh>
+                                <TableTh ta="center" fw={300}>{model.model_type}</TableTh>
+                                <TableTh ta="center" fw={300}>{model.epochs}</TableTh>
+                                <TableTh ta="center" fw={300}>{model.window}</TableTh>
+                                <TableTh ta="center" fw={300}>{Math.round(model.mape * 1000) / 1000}</TableTh>
+                                <TableTh ta="center" fw={300}>{Math.round(model.rmse * 1000) / 1000}</TableTh>
+                                <TableTh ta="center" fw={300}>{Math.round(model.direction * 100) / 100}</TableTh>
+                                <TableTh ta="center" fw={300}>{formatDate(model.created)}</TableTh>
                                 <TableTh>
                                     <ActionIcon disabled={model._id == initialSelected} variant='transparent' onClick={() => {
                                         setSelectedId(model._id)

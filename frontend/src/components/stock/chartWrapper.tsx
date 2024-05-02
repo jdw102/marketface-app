@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react'
 import StockChart from './stockChart';
 import { getSimulatedDate } from '@/lib/timeDifference';
+import { Grid, GridCol, Card } from '@mantine/core';
+import PriceSummary from './priceSummary';
 
 
 export interface StockData {
@@ -43,7 +45,8 @@ const ChartWrapper = ({ ticker }: { ticker: string }) => {
     const [predictions, setPredictions] = useState([]);
     const [predicting, setPredicting] = useState<boolean>(false);
     const [timeframe, setTimeframe] = useState<string>('1W');
-    const [modelStats, setModelStats] = useState<any>(null);
+    const [modelStats, setModelStats] = useState<any>();
+    const [mostRecent, setMostRecent] = useState<any>(null);
 
     useEffect(() => {
         const fetchStockData = async () => {
@@ -52,8 +55,18 @@ const ChartWrapper = ({ ticker }: { ticker: string }) => {
                 setLoading(true);
                 const response = await fetch(`http://127.0.0.1:5000/stock_data?symbol=${ticker}&timeframe=${timeframe}&curr_date=${curr_date}`);
                 const data = await response.json();
-                console.log(data)
                 setStockData(data.stock_data);
+                setMostRecent({
+                    date: formatDate(data.stock_data[data.stock_data.length - 1].date),
+                    close: data.stock_data[data.stock_data.length - 1].close,
+                    open: data.stock_data[data.stock_data.length - 1].open,
+                    high: data.stock_data[data.stock_data.length - 1].high,
+                    low: data.stock_data[data.stock_data.length - 1].low,
+                    volume: data.stock_data[data.stock_data.length - 1].volume,
+                    percentChange: (data.stock_data[data.stock_data.length - 1].close - data.stock_data[data.stock_data.length - 2].close) / data.stock_data[data.stock_data.length - 2].close,
+                    priceChange: data.stock_data[data.stock_data.length - 1].close - data.stock_data[data.stock_data.length - 2].close
+                })
+                console.log(data)
                 setPredictions(data.model_stats.predictions);
                 setModelStats({
                     rmse: data.model_stats.rmse,
@@ -98,6 +111,16 @@ const ChartWrapper = ({ ticker }: { ticker: string }) => {
         }
     })
 
+    for (let i = allData.closingPrice.length - 1; i >= 0; i--) {
+        if (allData.closingPrice[i].predicted) {
+            modelStats.nextPrice = allData.closingPrice[i].predicted;
+            modelStats.nextDate = allData.closingPrice[i].date;
+            modelStats.predictedPriceChange = (allData.closingPrice[i].predicted - allData.closingPrice[i - 1].value);
+            modelStats.predictedPercentChange = (allData.closingPrice[i].predicted - allData.closingPrice[i - 1].value) / allData.closingPrice[i - 1].value;
+            break;
+        }
+    }
+
 
     for (let i = 0; i < allData.closingPrice.length; i++) {
         if (allData.closingPrice[i].predicted && i > 0 && !allData.closingPrice[i - 1].predicted) {
@@ -107,23 +130,23 @@ const ChartWrapper = ({ ticker }: { ticker: string }) => {
         }
     }
 
-    console.log(allData)
 
     const handleMakePrediction = async () => {
         const curr_date = getSimulatedDate(localStorage);
         setPredicting(true);
         try {
-            const predictions = await fetch(`http://127.0.0.1:5000/predict?symbol=${ticker}&curr_date=${curr_date}`, {
+            const data = await fetch(`http://127.0.0.1:5000/predict?symbol=${ticker}&curr_date=${curr_date}`, {
                 next: {
                     revalidate: 0
                 }
             }).then((res) => res.json());
-            setPredictions(predictions.predictions);
+            console.log(data)
+            setPredictions(data.predictions);
             setModelStats({
-                rmse: predictions.rmse,
-                direction: predictions.direction,
-                mape: predictions.mape,
-                name: predictions.name
+                rmse: data.rmse,
+                direction: data.direction,
+                mape: data.mape,
+                name: data.name
             });
         } catch (error) {
             console.error('Error fetching predictions:', error);
@@ -134,16 +157,23 @@ const ChartWrapper = ({ ticker }: { ticker: string }) => {
 
 
     return (
-        <div>
-            <StockChart
-                predicting={predicting}
-                loading={loading}
-                data={allData}
-                timeframe={timeframe}
-                setTimeframe={setTimeframe}
-                handleMakePrediction={handleMakePrediction}
-                modelStats={modelStats} />
-        </div>
+        <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" >
+            <Grid>
+                <GridCol span={{sm: 12, md: 7, lg:8}}>
+                    <StockChart
+                        predicting={predicting}
+                        loading={loading}
+                        data={allData}
+                        timeframe={timeframe}
+                        setTimeframe={setTimeframe}
+                        handleMakePrediction={handleMakePrediction}
+                        modelStats={modelStats} />
+                </GridCol>
+                <GridCol span={{sm: 12, md: 5, lg:4}}>
+                    <PriceSummary loading={loading || predicting} mostRecent={mostRecent} modelStats={modelStats} handleMakePrediction={handleMakePrediction}/>
+                </GridCol>
+            </Grid>
+        </Card>
     )
 }
 

@@ -64,7 +64,6 @@ const SentimentRing: React.FC<SentimentRingProps> = ({ title, ticker, api, timef
         await fetchScore(tf);
         setLoading(false);
     }
-    console.log(sentimentData)
     let chartData = []
     if (sentimentData.num_neg + sentimentData.num_neu + sentimentData.num_pos == 0) {
         chartData = [

@@ -1,4 +1,4 @@
-import { Grid, GridCol, Stack, Title } from "@mantine/core";
+import { Center, Grid, GridCol, Stack, Title } from "@mantine/core";
 import TwitsFeed from "@/components/stock/twitsFeed";
 import HeadlineFeed from "@/components/stock/headlinesFeed";
 import ChartWrapper from "@/components/stock/chartWrapper";
@@ -26,38 +26,42 @@ export default async function Page({ params }: { params: { ticker: string } }) {
         <GridCol span={12}>
           <ChartWrapper ticker={params.ticker} />
         </GridCol>
-        <GridCol span={6}>
-          <Stack justify="space-between" h="100%">
-            <div >
-              <SentimentRing title="Stocktwits Sentiment" ticker={params.ticker} api="stocktwits_sentiment_score"
-                timeframeOptions={['30MIN', '1HR', '3HR', '12HR', '1D']}
-              />
-            </div>
-            <div >
-              <SentimentRing title="News Sentiment" ticker={params.ticker} api="headlines_sentiment_score"
-                timeframeOptions={['1D', '1W', '1M', '1Y']}
-              />
-            </div>
-          </Stack>
+        <GridCol span={{ sm: 12, md: 6 }}>
+            <Grid justify="space-between" align="center" >
+              <GridCol span={{ md: 12 }}>
+                <div >
+                  <SentimentRing title="Stocktwits Sentiment" ticker={params.ticker} api="stocktwits_sentiment_score"
+                    timeframeOptions={['30MIN', '1HR', '3HR', '12HR', '1D']}
+                  />
+                </div>
+              </GridCol>
+              <GridCol span={{ md: 12 }}>
+                <div >
+                  <SentimentRing title="News Sentiment" ticker={params.ticker} api="headlines_sentiment_score"
+                    timeframeOptions={['1D', '1W', '1M', '1Y']}
+                  />
+                </div>
+              </GridCol>
+            </Grid>
         </GridCol>
-        <GridCol span={6}>
-          <div style={{ height: "75vh" }}>
+        <GridCol span={{ sm: 12, md: 6 }}>
+          <div >
             <SentimentChart ticker={params.ticker} timeframeOptions={['1W', '1M', '3M', 'YTD', '1Y', 'All']} />
           </div>
         </GridCol>
-        <GridCol span={6}>
+        <GridCol span={{ sm: 12, md: 6 }}>
           <div style={{ height: "75vh" }}>
             <TwitsFeed ticker={params.ticker} title="StockTwits Feed" />
           </div>
         </GridCol>
-        <GridCol span={6} >
+        <GridCol span={{ sm: 12, md: 6 }} >
           <div style={{ height: "75vh" }}>
             <HeadlineFeed ticker={params.ticker} title="Headlines" />
           </div>
         </GridCol>
-        <GridCol>
+        <GridCol span={{ sm: 12, md: 12 }}>
           <div>
-            <AnalystRatings ticker={params.ticker} title="Analyst Ratings"/>
+            <AnalystRatings ticker={params.ticker} title="Analyst Ratings" />
           </div>
         </GridCol>
       </Grid>
