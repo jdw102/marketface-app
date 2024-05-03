@@ -33,7 +33,7 @@ export default async function HeroText() {
           <Stack gap="xl" justify="center">
             <Group justify="center">
               <Title w="80%" ta="center">
-                Market sentimen and predictions for{" "}
+                Market sentiment and predictions for{" "}
                 <Text component="span" inherit c="indigo">
                   anyone
                 </Text>
@@ -46,22 +46,26 @@ export default async function HeroText() {
             </Container>
 
             <Group justify='center'>
-              <Button
+              <Anchor href="/models">
+                <Button
 
-                size="lg"
-                variant="default"
-                color="gray"
-              >
-                View Models
-              </Button>
-              <Button size="lg">
-                About This Project
-              </Button>
+                  size="lg"
+                  variant="default"
+                  color="gray"
+                >
+                  View Models
+                </Button>
+              </Anchor>
+              <Anchor href="#about">
+                <Button size="lg">
+                  About This Project
+                </Button>
+              </Anchor>
             </Group>
           </Stack>
         </Container>
       </Center>
-      <Container size={1400} mt={60}>
+      <Container size={1400} mt={60} id="about">
         <Title order={2} ta="center">
           Things to know
         </Title>

@@ -80,7 +80,7 @@ const SentimentChart = ({ ticker, timeframeOptions }: SentimentChartProps) => {
         <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" >
             <div >
                 <LineChart
-                    h={"80vh"}
+                    h={"31rem"}
                     data={sentimentData}
                     dataKey='date'
                     yAxisLabel='Score'

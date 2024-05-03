@@ -66,7 +66,6 @@ const ChartWrapper = ({ ticker }: { ticker: string }) => {
                     percentChange: (data.stock_data[data.stock_data.length - 1].close - data.stock_data[data.stock_data.length - 2].close) / data.stock_data[data.stock_data.length - 2].close,
                     priceChange: data.stock_data[data.stock_data.length - 1].close - data.stock_data[data.stock_data.length - 2].close
                 })
-                console.log(data)
                 setPredictions(data.model_stats.predictions);
                 setModelStats({
                     rmse: data.model_stats.rmse,
@@ -140,7 +139,6 @@ const ChartWrapper = ({ ticker }: { ticker: string }) => {
                     revalidate: 0
                 }
             }).then((res) => res.json());
-            console.log(data)
             setPredictions(data.predictions);
             setModelStats({
                 rmse: data.rmse,

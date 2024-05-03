@@ -25,7 +25,6 @@ const PriceSummary = ({ mostRecent, modelStats, handleMakePrediction }: {
     modelStats: any,
     handleMakePrediction: () => void
 }) => {
-    console.log("MODEL", modelStats)
     return (
         <div>
             <div style={{ marginBottom: 20, padding:10 }}>

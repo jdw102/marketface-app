@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 from flask import jsonify
-from tensorflow.keras.layers import Input, LSTM, Dense
+from tensorflow.keras.layers import Input, LSTM, Dense, Bidirectional
 from tensorflow.keras.models import Model
 from google.cloud import storage
 import os
@@ -47,8 +47,6 @@ def calculate_mape(y_true, y_pred):
 
 def calculate_dir(actual_prices, predicted_prices):
     total = 0
-    print(actual_prices)
-    print(predicted_prices)
     for i in range(len(predicted_prices)):
         prev_price = actual_prices[i - 1]
         actual_price = actual_prices[i]
@@ -60,6 +58,43 @@ def calculate_dir(actual_prices, predicted_prices):
             if predicted_price < prev_price:
                 total += 1
     return total / len(predicted_prices)
+
+
+def create_model_LSTM_1L(X_train, layer_units=150, loss="mean_squared_error", optimizer="rmsprop", num_features=1):
+    inp = Input(shape=(X_train.shape[1], X_train.shape[2]))
+
+    x = LSTM(units=layer_units)(inp)
+    out = Dense(num_features, activation="linear")(x)
+    model = Model(inp, out)
+
+    model.compile(loss=loss, optimizer=optimizer)
+
+    return model
+
+
+
+def create_model_BiLSTM(X_train, layer_units=150, loss="mean_squared_error", optimizer="rmsprop"):
+    inp = Input(shape=(X_train.shape[1], X_train.shape[2]))
+
+    x = Bidirectional(LSTM(units=layer_units, return_sequences=True))(inp)
+    x = Bidirectional(LSTM(units=layer_units))(x)
+    out = Dense(1, activation="linear")(x)
+    model = Model(inp, out)
+
+    model.compile(loss=loss, optimizer=optimizer)
+
+    return model
+
+
+
+def get_model_type(model_type, X_train, layer_units=150, loss="mean_squared_error", optimizer="rmsprop"):
+    if model_type == "LSTM":
+        return create_model_LSTM_1L(X_train, layer_units=layer_units, loss=loss, optimizer=optimizer)
+    elif model_type == "BiLSTM":
+        return create_model_BiLSTM(X_train, layer_units=layer_units, loss=loss, optimizer=optimizer)
+    else:
+        raise ValueError("Invalid model type")
+
 
 
 def create_model(X_train, layer_units=50, loss="mean_squared_error", optimizer="rmsprop"):
@@ -99,7 +134,6 @@ def make_prediction(ticker, curr_date):
     model_id = get_saved_model(ticker)
     model_data = get_model_by_id(model_id)
     day_predicting = get_first_date_greater_than(ticker, curr_date)
-    print("Day predicting: ", day_predicting)
     if ("running_predictions" in model_data 
         and len(model_data["running_predictions"]) > 0
         and model_data["running_predictions"][-1]["date"].date() >= day_predicting.date()
@@ -123,14 +157,13 @@ def make_prediction(ticker, curr_date):
         running_rmse = 0
         running_mape = 0
         running_direction = 0
-    ## you're scaling by the entire dataset, not just the training data
     window = model_data["window"]
     features = model_data["features"]
     scaler = StandardScaler()
     scaler_close = StandardScaler()
-    scaler.fit_transform(df[features])
+    scaled_data = scaler.fit_transform(df[features])
     scaler_close.fit(df[["close"]])
-    model_input = df[features][-window:].values
+    model_input = scaled_data[-window:]
     model = load_model_from_bucket(model_data)
     predicted_price = model.predict(model_input.reshape((1, model_input.shape[0], model_input.shape[1])))
     predicted_price = scaler_close.inverse_transform(predicted_price)[0][0]
@@ -160,8 +193,15 @@ def train_model(model_type, model_name, window, symbol, start_date, end_date, cu
     close_price_indx = features.index("close")
     X_train, y_train = extract_seqX_outcomeY(train_scaled, window, window, close_price_indx)
     X_test = extract_test_data(features, data, test, window, scaler)
-    model = create_model(X_train)
-    history = model.fit(X_train, y_train, epochs=epochs, batch_size=len(train), verbose=1, shuffle=False, validation_split=0.1)
+    model = get_model_type(model_type, X_train)
+    history = model.fit(
+        X_train, 
+        y_train, 
+        epochs=epochs, 
+        batch_size=32, 
+        verbose=1, 
+        shuffle=False, 
+        validation_split=0.1)
 
     predicted_price = model.predict(X_test)
     predicted_price = close_scaler.inverse_transform(predicted_price)[:, 0]
@@ -265,7 +305,8 @@ def get_model_settings():
                 }
             ],
         "types": [
-            "LSTM"
+            "LSTM",
+            "BiLSTM"
         ]
     }
     return jsonify(settings)
@@ -290,7 +331,6 @@ def get_predictions(ticker, curr_date):
     model_data = get_model_by_id(model_id)
     if "running_predictions" not in model_data:
         return []
-    print(model_data["running_predictions"])
     return {
         "predictions": model_data["running_predictions"],
         "rmse": model_data["running_rmse"],

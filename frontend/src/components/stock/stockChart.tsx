@@ -29,7 +29,7 @@ const StockChart = ({ data, timeframe, handleMakePrediction, setTimeframe, loadi
 
     const [selected, setSelected] = useState<'closingPrice' | 'openPrice' | 'highPrice' | 'volume'>('closingPrice');
     const [showModal, setShowModal] = useState<boolean>(false);
-    const timeframeOptions = ['1W', '1M', '3M', 'YTD', '1Y', 'All']
+    const timeframeOptions = ['1W', '1M', '3M',  '1Y', 'All']
 
 
     const handleSelection = (type: 'closingPrice' | 'openPrice' | 'highPrice' | 'volume' | string | null) => {
@@ -67,7 +67,7 @@ const StockChart = ({ data, timeframe, handleMakePrediction, setTimeframe, loadi
                     }
                 ]} value={selected} onChange={(value) => handleSelection(value)} />
             </Group>
-            <div style={{ height: '80vh', marginTop: 10 }}>
+            <div style={{ height: '30rem', marginTop: 10 }}>
                 <LineChart
                     h="100%"
                     data={data[selected]}

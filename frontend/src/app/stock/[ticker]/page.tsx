@@ -46,7 +46,7 @@ export default async function Page({ params }: { params: { ticker: string } }) {
         </GridCol>
         <GridCol span={{ sm: 12, md: 6 }}>
           <div >
-            <SentimentChart ticker={params.ticker} timeframeOptions={['1W', '1M', '3M', 'YTD', '1Y', 'All']} />
+            <SentimentChart ticker={params.ticker} timeframeOptions={['1W', '1M', '3M', '1Y', 'All']} />
           </div>
         </GridCol>
         <GridCol span={{ sm: 12, md: 6 }}>

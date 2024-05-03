@@ -34,7 +34,7 @@ export function Shell({ children, tickers, minDate, maxDate }: {
           <Burger opened={desktopOpened} onClick={toggleDesktop} visibleFrom="sm" size="sm" />
           <a href="/" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
             <Image src="/logo.png" alt="Marketface" height={40} />
-            <Title order={3} fw={700} ml="sm" mt={17} c="indigo">Marketface</Title>
+            <Title order={3} fw={700} ml="sm" mt={17} c="indigo">MarketFace</Title>
           </a>
         </Group>
       </AppShell.Header>

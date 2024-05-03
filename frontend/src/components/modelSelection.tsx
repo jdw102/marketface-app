@@ -49,7 +49,6 @@ const ModelSelection = ({ models, saved_models }: ModelTableProps) => {
             <div style={{marginBottom: 20}}>
                 <ModelTable models={models} setSelectedModel={setSelectedModel} selectedModelId={selectedModel} initialSelected={initialModel}/>
                 <Group mt={10}>
-                    <Button variant="light" onClick={() => setSelectedModel(initialModel)}>Reset</Button>
                     <Button  onClick={open}>Save</Button>
                 </Group>
             </div>
